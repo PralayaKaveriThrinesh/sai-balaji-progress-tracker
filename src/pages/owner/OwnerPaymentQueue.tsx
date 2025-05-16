@@ -59,9 +59,10 @@ const OwnerPaymentQueue = () => {
     setIsProcessing(true);
     
     try {
-      const updatedRequest = {
+      // Using the correct type for status
+      const updatedRequest: PaymentRequest = {
         ...selectedRequest,
-        status: 'paid',
+        status: 'paid'
       };
       
       updatePaymentRequest(updatedRequest);
@@ -91,7 +92,8 @@ const OwnerPaymentQueue = () => {
     setIsProcessing(true);
     
     try {
-      const updatedRequest = {
+      // Using the correct type for status
+      const updatedRequest: PaymentRequest = {
         ...selectedRequest,
         status: 'scheduled',
         scheduledDate: scheduledDate.toISOString(),
