@@ -14,31 +14,31 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 
 // Leader Pages
-import LeaderDashboard from "./pages/leader/LeaderDashboard";
-import LeaderCreateProject from "./pages/leader/LeaderCreateProject";
-import LeaderAddProgress from "./pages/leader/LeaderAddProgress";
-import LeaderViewProgress from "./pages/leader/LeaderViewProgress";
-import LeaderRequestPayment from "./pages/leader/LeaderRequestPayment";
-import LeaderViewPayment from "./pages/leader/LeaderViewPayment";
+import LeaderDashboard from "@/pages/leader/LeaderDashboard";
+import LeaderCreateProject from "@/pages/leader/LeaderCreateProject";
+import LeaderAddProgress from "@/pages/leader/LeaderAddProgress";
+import LeaderViewProgress from "@/pages/leader/LeaderViewProgress";
+import LeaderRequestPayment from "@/pages/leader/LeaderRequestPayment";
+import LeaderViewPayment from "@/pages/leader/LeaderViewPayment";
 
 // Checker Pages
 import CheckerDashboard from "./pages/checker/CheckerDashboard";
 import CheckerReviewSubmissions from "./pages/checker/CheckerReviewSubmissions";
-import CheckerReviewHistory from "./pages/checker/CheckerReviewHistory";
-import CheckerProjects from "./pages/checker/CheckerProjects";
+import CheckerReviewHistory from "@/pages/checker/CheckerReviewHistory";
+import CheckerProjects from "@/pages/checker/CheckerProjects";
 
 // Owner Pages
-import OwnerDashboard from "./pages/owner/OwnerDashboard";
+import OwnerDashboard from "@/pages/owner/OwnerDashboard";
 import OwnerPaymentQueue from "./pages/owner/OwnerPaymentQueue";
-import OwnerProjects from "./pages/owner/OwnerProjects";
-import OwnerStatistics from "./pages/owner/OwnerStatistics";
+import OwnerProjects from "@/pages/owner/OwnerProjects";
+import OwnerStatistics from "@/pages/owner/OwnerStatistics";
 
 // Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminCredentials from "./pages/admin/AdminCredentials";
-import AdminVehicles from "./pages/admin/AdminVehicles";
-import AdminDrivers from "./pages/admin/AdminDrivers";
-import AdminStatistics from "./pages/admin/AdminStatistics";
+import AdminVehicles from "@/pages/admin/AdminVehicles";
+import AdminDrivers from "@/pages/admin/AdminDrivers";
+import AdminStatistics from "@/pages/admin/AdminStatistics";
 
 const queryClient = new QueryClient();
 
