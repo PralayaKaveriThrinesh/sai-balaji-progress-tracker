@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import { getProjectsByLeaderId, getAllVehicles, addProgressUpdate, updateProject } from '@/lib/storage';
 import { Project, Vehicle, PhotoWithMetadata, ProgressUpdate } from '@/lib/types';
 import { PhotoPreview } from '@/components/shared/photo-preview';
+import { Progress } from '@/components/ui/progress';
+import { Camera, Clock, Upload, Percent } from 'lucide-react';
 
 const LeaderAddProgress = () => {
   const { user } = useAuth();
@@ -28,6 +30,7 @@ const LeaderAddProgress = () => {
   const [notes, setNotes] = useState<string>('');
   const [startMeterReading, setStartMeterReading] = useState<PhotoWithMetadata | null>(null);
   const [endMeterReading, setEndMeterReading] = useState<PhotoWithMetadata | null>(null);
+  const [progressPercentage, setProgressPercentage] = useState<number>(0);
   
   useEffect(() => {
     if (user) {
@@ -38,6 +41,18 @@ const LeaderAddProgress = () => {
       setVehicles(allVehicles);
     }
   }, [user]);
+  
+  useEffect(() => {
+    // Calculate progress percentage when project or completed work changes
+    if (selectedProject && completedWork) {
+      const project = projects.find(p => p.id === selectedProject);
+      if (project && project.totalWork > 0) {
+        const currentCompleted = project.completedWork + parseFloat(completedWork);
+        const percentage = Math.min(100, Math.round((currentCompleted / project.totalWork) * 100));
+        setProgressPercentage(percentage);
+      }
+    }
+  }, [selectedProject, completedWork, projects]);
   
   const handlePhotoCapture = (photo: PhotoWithMetadata) => {
     setPhotos(prev => [...prev, photo]);
@@ -186,8 +201,32 @@ const LeaderAddProgress = () => {
               </Select>
             </div>
             
+            {selectedProject && (
+              <div className="space-y-2 p-3 bg-muted/30 rounded-md">
+                <div className="flex justify-between text-sm">
+                  <span>Current Progress:</span>
+                  <span>{progressPercentage}%</span>
+                </div>
+                <Progress 
+                  value={progressPercentage} 
+                  className="h-2" 
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>
+                    {projects.find(p => p.id === selectedProject)?.completedWork || 0} meters completed
+                  </span>
+                  <span>
+                    {projects.find(p => p.id === selectedProject)?.totalWork || 0} meters total
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <div className="space-y-2">
-              <Label htmlFor="completedWork">Completed Work Today (meters)</Label>
+              <div className="flex items-center">
+                <Percent size={16} className="mr-2 text-muted-foreground" />
+                <Label htmlFor="completedWork">Completed Work Today (meters)</Label>
+              </div>
               <Input
                 id="completedWork"
                 type="number"
@@ -200,7 +239,10 @@ const LeaderAddProgress = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="timeTaken">Time Taken (hours)</Label>
+              <div className="flex items-center">
+                <Clock size={16} className="mr-2 text-muted-foreground" />
+                <Label htmlFor="timeTaken">Time Taken (hours)</Label>
+              </div>
               <Input
                 id="timeTaken"
                 type="number"
@@ -264,7 +306,10 @@ const LeaderAddProgress = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <PhotoPreview onCapture={handlePhotoCapture} />
+            <PhotoPreview 
+              onCapture={handlePhotoCapture} 
+              buttonText="Capture Progress Photo"
+            />
             
             {photos.length > 0 && (
               <div className="mt-4">
@@ -282,7 +327,7 @@ const LeaderAddProgress = () => {
                         className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                         type="button"
                       >
-                        ×
+                        <X size={16} />
                       </button>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
                         {new Date(photo.timestamp).toLocaleTimeString()}
@@ -298,7 +343,10 @@ const LeaderAddProgress = () => {
                 <div>
                   <h3 className="font-medium mb-2">Vehicle Start Meter Reading:</h3>
                   {!startMeterReading ? (
-                    <PhotoPreview onCapture={handleStartMeterCapture} />
+                    <PhotoPreview 
+                      onCapture={handleStartMeterCapture} 
+                      buttonText="Capture Start Reading"
+                    />
                   ) : (
                     <div className="relative">
                       <img
@@ -311,7 +359,7 @@ const LeaderAddProgress = () => {
                         className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                         type="button"
                       >
-                        ×
+                        <X size={16} />
                       </button>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
                         {new Date(startMeterReading.timestamp).toLocaleTimeString()}
@@ -323,7 +371,10 @@ const LeaderAddProgress = () => {
                 <div>
                   <h3 className="font-medium mb-2">Vehicle End Meter Reading:</h3>
                   {!endMeterReading ? (
-                    <PhotoPreview onCapture={handleEndMeterCapture} />
+                    <PhotoPreview 
+                      onCapture={handleEndMeterCapture} 
+                      buttonText="Capture End Reading"
+                    />
                   ) : (
                     <div className="relative">
                       <img
@@ -336,7 +387,7 @@ const LeaderAddProgress = () => {
                         className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                         type="button"
                       >
-                        ×
+                        <X size={16} />
                       </button>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
                         {new Date(endMeterReading.timestamp).toLocaleTimeString()}

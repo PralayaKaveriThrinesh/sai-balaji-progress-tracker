@@ -9,9 +9,10 @@ import {
   getAllProjects, 
   getAllPaymentRequests, 
   getAllUsers, 
-  getAllVehicles 
+  getAllVehicles,
+  getLeaderProgressStats
 } from '@/lib/storage';
-import { Project, PaymentRequest, User, Vehicle } from '@/lib/types';
+import { Project, PaymentRequest, User, Vehicle, LeaderProgressStats } from '@/lib/types';
 import { 
   BarChart, 
   Bar, 
@@ -25,6 +26,8 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { Clock, Percent, MapPin } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 // Custom colors for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -36,6 +39,7 @@ const AdminDashboard = () => {
   const [payments, setPayments] = useState<PaymentRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [leaderStats, setLeaderStats] = useState<LeaderProgressStats[]>([]);
   
   // Stats
   const [totalCompletedWork, setTotalCompletedWork] = useState(0);
@@ -60,6 +64,10 @@ const AdminDashboard = () => {
     
     const allVehicles = getAllVehicles();
     setVehicles(allVehicles);
+    
+    // Get leader progress stats
+    const stats = getLeaderProgressStats();
+    setLeaderStats(stats);
     
     // Calculate stats
     const completed = allProjects.reduce((sum, project) => sum + project.completedWork, 0);
@@ -114,6 +122,12 @@ const AdminDashboard = () => {
   const getOverallProgress = () => {
     if (totalPlannedWork === 0) return 0;
     return Math.round((totalCompletedWork / totalPlannedWork) * 100);
+  };
+
+  const formatTime = (hours: number) => {
+    const wholeHours = Math.floor(hours);
+    const minutes = Math.round((hours - wholeHours) * 60);
+    return `${wholeHours}h ${minutes}m`;
   };
   
   return (
@@ -176,6 +190,73 @@ const AdminDashboard = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Team Leaders Progress Section */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Team Leaders Progress</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {leaderStats.map(leader => (
+            <Card key={leader.leaderId}>
+              <CardHeader>
+                <CardTitle>{leader.leaderName}</CardTitle>
+                <CardDescription>
+                  {leader.projectCount} Projects
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Percent size={16} className="mr-2 text-muted-foreground" />
+                      <span>Progress:</span>
+                    </div>
+                    <span className="font-medium">{leader.completionPercentage}%</span>
+                  </div>
+                  <Progress value={leader.completionPercentage} />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center space-x-2">
+                    <MapPin size={16} className="text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Distance</div>
+                      <div className="font-medium">{leader.totalDistance} meters</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Clock size={16} className="text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Time Spent</div>
+                      <div className="font-medium">{formatTime(leader.totalTime)}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {leader.recentUpdates.length > 0 && (
+                  <div>
+                    <div className="text-sm font-medium mb-1">Latest Update</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(leader.recentUpdates[0].date).toLocaleDateString()}:
+                      {' '}{leader.recentUpdates[0].completedWork} meters in {leader.recentUpdates[0].timeTaken} hours
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  size="sm"
+                  onClick={() => navigate('/admin/statistics')}
+                >
+                  View Detailed Stats
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
       
       <div className="grid gap-6 md:grid-cols-2">

@@ -35,6 +35,8 @@ export interface Driver {
   licenseType: string;
   experience: number;
   isExternal: boolean;
+  contactNumber?: string;
+  address?: string;
 }
 
 export interface Location {
@@ -89,3 +91,15 @@ export interface CorrectionRequest {
   status: "pending" | "approved" | "rejected";
   checkerNotes?: string;
 }
+
+// Enhanced interfaces for tracking progress
+export interface LeaderProgressStats {
+  leaderId: string;
+  leaderName: string;
+  projectCount: number;
+  totalDistance: number; // Total distance covered
+  totalTime: number; // Total time spent
+  completionPercentage: number; // Overall completion percentage
+  recentUpdates: ProgressUpdate[];
+}
+

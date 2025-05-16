@@ -1,6 +1,8 @@
+
 import { 
   User, Project, Vehicle, Driver, ProgressUpdate, 
-  PaymentRequest, CorrectionRequest, Location, UserRole 
+  PaymentRequest, CorrectionRequest, Location, UserRole, 
+  LeaderProgressStats
 } from "./types";
 
 // LocalStorage keys
@@ -230,6 +232,10 @@ export function deleteProject(id: string): void {
 // Vehicle management
 export function getAllVehicles(): Vehicle[] {
   return getItem<Vehicle[]>(STORAGE_KEYS.VEHICLES) || [];
+}
+
+export function getVehicles(): Vehicle[] {
+  return getAllVehicles();
 }
 
 export function getVehicleById(id: string): Vehicle | null {
@@ -467,6 +473,36 @@ export function getUsersByRole(role: UserRole): User[] {
   return users.filter(user => user.role === role);
 }
 
-export function getVehicles(): Vehicle[] {
-  return getAllVehicles();
+// Get leader progress statistics for admin dashboard
+export function getLeaderProgressStats(): LeaderProgressStats[] {
+  const leaders = getUsersByRole('leader');
+  const projects = getAllProjects();
+  const progressUpdates = getAllProgressUpdates();
+  
+  return leaders.map(leader => {
+    const leaderProjects = projects.filter(project => project.leaderId === leader.id);
+    const projectIds = leaderProjects.map(project => project.id);
+    
+    const leaderProgressUpdates = progressUpdates.filter(update => 
+      projectIds.includes(update.projectId)
+    ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    const totalDistance = leaderProjects.reduce((sum, project) => sum + project.completedWork, 0);
+    const totalPlannedDistance = leaderProjects.reduce((sum, project) => sum + project.totalWork, 0);
+    const totalTime = leaderProgressUpdates.reduce((sum, update) => sum + update.timeTaken, 0);
+    
+    const completionPercentage = totalPlannedDistance > 0 
+      ? Math.min(100, Math.round((totalDistance / totalPlannedDistance) * 100))
+      : 0;
+    
+    return {
+      leaderId: leader.id,
+      leaderName: leader.name,
+      projectCount: leaderProjects.length,
+      totalDistance,
+      totalTime,
+      completionPercentage,
+      recentUpdates: leaderProgressUpdates.slice(0, 5) // Get latest 5 updates
+    };
+  });
 }
