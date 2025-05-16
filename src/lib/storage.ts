@@ -314,7 +314,7 @@ export function getProgressUpdatesByProjectId(projectId: string): ProgressUpdate
   return updates.filter(update => update.projectId === projectId);
 }
 
-export function createProgressUpdate(update: Omit<ProgressUpdate, 'id'>): ProgressUpdate {
+export function addProgressUpdate(update: Omit<ProgressUpdate, 'id'>): ProgressUpdate {
   const updates = getAllProgressUpdates();
   const newUpdate = {
     ...update,
@@ -322,14 +322,6 @@ export function createProgressUpdate(update: Omit<ProgressUpdate, 'id'>): Progre
   };
   updates.push(newUpdate);
   setItem(STORAGE_KEYS.PROGRESS_UPDATES, updates);
-  
-  // Update project completed work
-  const project = getProjectById(update.projectId);
-  if (project) {
-    project.completedWork += update.workCompleted;
-    updateProject(project);
-  }
-  
   return newUpdate;
 }
 
@@ -337,38 +329,15 @@ export function updateProgressUpdate(update: ProgressUpdate): void {
   const updates = getAllProgressUpdates();
   const index = updates.findIndex(u => u.id === update.id);
   if (index !== -1) {
-    // Calculate difference in work completed
-    const workDifference = update.workCompleted - updates[index].workCompleted;
-    
     updates[index] = update;
     setItem(STORAGE_KEYS.PROGRESS_UPDATES, updates);
-    
-    // Update project completed work if there's a difference
-    if (workDifference !== 0) {
-      const project = getProjectById(update.projectId);
-      if (project) {
-        project.completedWork += workDifference;
-        updateProject(project);
-      }
-    }
   }
 }
 
 export function deleteProgressUpdate(id: string): void {
   const updates = getAllProgressUpdates();
-  const updateToDelete = updates.find(update => update.id === id);
-  
-  if (updateToDelete) {
-    // Update project completed work
-    const project = getProjectById(updateToDelete.projectId);
-    if (project) {
-      project.completedWork -= updateToDelete.workCompleted;
-      updateProject(project);
-    }
-    
-    const filteredUpdates = updates.filter(update => update.id !== id);
-    setItem(STORAGE_KEYS.PROGRESS_UPDATES, filteredUpdates);
-  }
+  const filteredUpdates = updates.filter(update => update.id !== id);
+  setItem(STORAGE_KEYS.PROGRESS_UPDATES, filteredUpdates);
 }
 
 // Payment requests
@@ -496,4 +465,8 @@ export async function getCurrentLocation(): Promise<Location> {
 export function getUsersByRole(role: UserRole): User[] {
   const users = getAllUsers();
   return users.filter(user => user.role === role);
+}
+
+export function getVehicles(): Vehicle[] {
+  return getAllVehicles();
 }

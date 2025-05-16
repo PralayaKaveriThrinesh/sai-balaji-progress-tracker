@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/components/ui/sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
-import { getProjectsByLeaderId, getVehicles, addProgressUpdate, updateProject } from '@/lib/storage';
+import { getProjectsByLeaderId, getAllVehicles, addProgressUpdate, updateProject } from '@/lib/storage';
 import { Project, Vehicle, PhotoWithMetadata, ProgressUpdate } from '@/lib/types';
 import { PhotoPreview } from '@/components/shared/photo-preview';
 
@@ -34,7 +34,7 @@ const LeaderAddProgress = () => {
       const userProjects = getProjectsByLeaderId(user.id);
       setProjects(userProjects);
       
-      const allVehicles = getVehicles();
+      const allVehicles = getAllVehicles();
       setVehicles(allVehicles);
     }
   }, [user]);

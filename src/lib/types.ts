@@ -37,47 +37,34 @@ export interface Driver {
   isExternal: boolean;
 }
 
-export interface ProgressUpdate {
-  id: string;
-  projectId: string;
-  date: string;
-  workCompleted: number; // in meters
-  timeSpent: number; // in hours
-  photos: ProgressPhoto[];
-  vehicleData?: {
-    vehicleId: string;
-    startMeter: {
-      reading: number;
-      photo: string;
-      timestamp: string;
-      location: Location;
-    };
-    endMeter: {
-      reading: number;
-      photo: string;
-      timestamp: string;
-      location: Location;
-    };
-    driver: string; // driverId
-  };
-}
-
-export interface ProgressPhoto {
-  id: string;
-  dataUrl: string;
-  timestamp: string;
-  location: Location;
-}
-
 export interface Location {
   latitude: number;
   longitude: number;
 }
 
+export interface PhotoWithMetadata {
+  dataUrl: string;
+  timestamp: string;
+  location: Location;
+}
+
+export interface ProgressUpdate {
+  id: string;
+  projectId: string;
+  date: string;
+  completedWork: number; // in meters
+  timeTaken: number; // in hours
+  photos: PhotoWithMetadata[];
+  notes?: string;
+  vehicleId?: string;
+  startMeterReading?: PhotoWithMetadata;
+  endMeterReading?: PhotoWithMetadata;
+}
+
 export interface PaymentRequest {
   id: string;
   projectId: string;
-  progressUpdateId: string;
+  progressUpdateId?: string;
   date: string;
   purposes: PaymentPurpose[];
   status: "pending" | "approved" | "rejected" | "scheduled" | "paid";
@@ -89,11 +76,7 @@ export interface PaymentRequest {
 export interface PaymentPurpose {
   type: "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
   amount: number;
-  images: {
-    dataUrl: string;
-    timestamp: string;
-    location: Location;
-  }[];
+  images: PhotoWithMetadata[];
 }
 
 export interface CorrectionRequest {
