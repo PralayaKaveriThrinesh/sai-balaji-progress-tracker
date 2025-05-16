@@ -3,130 +3,135 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog';
 import { PhotoPreview } from '@/components/shared/photo-preview';
 import { MapView } from '@/components/shared/map-view';
+import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
-import { 
-  getAllPaymentRequests, 
-  updatePaymentRequest, 
+import {
+  getAllPaymentRequests,
+  updatePaymentRequest,
   getProjectById,
-  getProgressUpdateById 
+  getProgressUpdateById
 } from '@/lib/storage';
-import { PaymentRequest, Project, ProgressUpdate } from '@/lib/types';
+import { PaymentRequest, Project, ProgressUpdate, PaymentPurpose } from '@/lib/types';
 
 const CheckerReviewSubmissions = () => {
   const { user } = useAuth();
   const [pendingRequests, setPendingRequests] = useState<PaymentRequest[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [selectedProgressUpdate, setSelectedProgressUpdate] = useState<ProgressUpdate | null>(null);
-  const [showReviewDialog, setShowReviewDialog] = useState<boolean>(false);
-  const [checkerNotes, setCheckerNotes] = useState<string>('');
-  const [isApproving, setIsApproving] = useState<boolean>(false);
-  const [isRejecting, setIsRejecting] = useState<boolean>(false);
+  const [selectedProgress, setSelectedProgress] = useState<ProgressUpdate | null>(null);
   
-  // Load all pending payment requests
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [notes, setNotes] = useState('');
+  
+  // Load pending requests on mount
   useEffect(() => {
-    loadPendingRequests();
+    const requests = getAllPaymentRequests()
+      .filter(request => request.status === 'pending')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setPendingRequests(requests);
   }, []);
   
-  const loadPendingRequests = () => {
-    const allPayments = getAllPaymentRequests();
-    const pending = allPayments.filter(p => p.status === 'pending');
-    setPendingRequests(pending);
-    
-    // Clear selected request if it's no longer pending
-    if (selectedRequest && !pending.some(p => p.id === selectedRequest.id)) {
-      setSelectedRequest(null);
-      setSelectedProject(null);
-      setSelectedProgressUpdate(null);
-    }
-  };
-  
-  const handleReviewRequest = (request: PaymentRequest) => {
+  const handleViewDetails = (request: PaymentRequest) => {
     setSelectedRequest(request);
+    
+    // Get related project and progress update
     const project = getProjectById(request.projectId);
     setSelectedProject(project);
     
     const progressUpdate = getProgressUpdateById(request.progressUpdateId);
-    setSelectedProgressUpdate(progressUpdate);
+    setSelectedProgress(progressUpdate);
     
-    setCheckerNotes('');
+    setShowDetailsDialog(true);
+  };
+  
+  const handleReview = (request: PaymentRequest) => {
+    setSelectedRequest(request);
+    setNotes('');
     setShowReviewDialog(true);
   };
   
-  const handleApprove = async () => {
+  const handleApprove = () => {
     if (!selectedRequest) return;
-    
-    setIsApproving(true);
     
     try {
       const updatedRequest = {
         ...selectedRequest,
-        status: 'approved',
-        checkerNotes: checkerNotes.trim() || undefined,
+        status: 'approved' as const,
+        checkerNotes: notes
       };
       
       updatePaymentRequest(updatedRequest);
-      toast.success('Payment request approved');
+      
+      // Update local state
+      setPendingRequests(prevRequests => 
+        prevRequests.filter(req => req.id !== selectedRequest.id)
+      );
+      
       setShowReviewDialog(false);
-      loadPendingRequests();
+      toast.success('Payment request approved successfully');
     } catch (error) {
       console.error('Error approving request:', error);
       toast.error('Failed to approve payment request');
-    } finally {
-      setIsApproving(false);
     }
   };
   
-  const handleReject = async () => {
+  const handleReject = () => {
     if (!selectedRequest) return;
     
-    if (!checkerNotes.trim()) {
-      toast.error('Please provide a reason for rejection');
+    if (!notes.trim()) {
+      toast.error('Please provide notes explaining the rejection reason');
       return;
     }
-    
-    setIsRejecting(true);
     
     try {
       const updatedRequest = {
         ...selectedRequest,
-        status: 'rejected',
-        checkerNotes: checkerNotes.trim(),
+        status: 'rejected' as const,
+        checkerNotes: notes
       };
       
       updatePaymentRequest(updatedRequest);
-      toast.success('Payment request rejected');
+      
+      // Update local state
+      setPendingRequests(prevRequests => 
+        prevRequests.filter(req => req.id !== selectedRequest.id)
+      );
+      
       setShowReviewDialog(false);
-      loadPendingRequests();
+      toast.success('Payment request rejected successfully');
     } catch (error) {
       console.error('Error rejecting request:', error);
       toast.error('Failed to reject payment request');
-    } finally {
-      setIsRejecting(false);
     }
   };
   
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
   };
   
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-4xl font-bold mb-6">Review Submissions</h1>
       <p className="text-muted-foreground mb-8">
-        Validate payment requests and review supporting documentation.
+        Review and validate payment requests submitted by project leaders.
       </p>
       
       <div className="grid gap-6 md:grid-cols-2">
         {pendingRequests.map((request) => {
           const project = getProjectById(request.projectId);
-          
           return (
             <Card key={request.id}>
               <CardHeader>
@@ -135,11 +140,11 @@ const CheckerReviewSubmissions = () => {
                   <span className="text-lg font-normal">₹ {request.totalAmount}</span>
                 </CardTitle>
                 <CardDescription>
-                  Requested on {formatDate(request.date)}
+                  Submitted on {formatDate(request.date)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div>
                     <p className="font-medium">Purposes</p>
                     <div className="flex flex-wrap gap-1.5 mt-1">
@@ -153,21 +158,21 @@ const CheckerReviewSubmissions = () => {
                       ))}
                     </div>
                   </div>
-                  
-                  <div>
-                    <p className="font-medium">Supporting Images</p>
-                    <p className="text-sm text-muted-foreground">
-                      {request.purposes.reduce((total, purpose) => total + purpose.images.length, 0)} images provided
-                    </p>
-                  </div>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex justify-between gap-2">
                 <Button 
-                  className="w-full"
-                  onClick={() => handleReviewRequest(request)}
+                  variant="outline" 
+                  onClick={() => handleViewDetails(request)}
+                  className="flex-1"
                 >
-                  Review Request
+                  View Details
+                </Button>
+                <Button 
+                  onClick={() => handleReview(request)}
+                  className="flex-1"
+                >
+                  Review
                 </Button>
               </CardFooter>
             </Card>
@@ -179,171 +184,144 @@ const CheckerReviewSubmissions = () => {
             <CardHeader>
               <CardTitle>No Pending Submissions</CardTitle>
               <CardDescription>
-                There are no payment requests awaiting review.
+                No payment requests are currently pending for review.
               </CardDescription>
             </CardHeader>
           </Card>
         )}
       </div>
       
-      {/* Review Dialog */}
-      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-        <DialogContent className="max-w-6xl">
+      {/* Payment Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Review Payment Request</DialogTitle>
+            <DialogTitle>Payment Request Details</DialogTitle>
             <DialogDescription>
-              Carefully review all documentation before approving or rejecting.
+              Submitted on {selectedRequest && formatDate(selectedRequest.date)}
             </DialogDescription>
           </DialogHeader>
           
-          {selectedRequest && selectedProject && (
+          {selectedRequest && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-semibold mb-2">Project Information</h3>
                   <div className="space-y-1 text-sm">
-                    <p><span className="font-medium">Project:</span> {selectedProject.name}</p>
-                    <p><span className="font-medium">Request Date:</span> {formatDate(selectedRequest.date)}</p>
+                    <p><span className="font-medium">Project:</span> {selectedProject?.name}</p>
+                    <p><span className="font-medium">Date:</span> {formatDate(selectedRequest.date)}</p>
                     <p><span className="font-medium">Total Amount:</span> ₹ {selectedRequest.totalAmount}</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-2">Progress Information</h3>
-                  <div className="space-y-1 text-sm">
-                    {selectedProgressUpdate ? (
-                      <>
-                        <p><span className="font-medium">Update Date:</span> {formatDate(selectedProgressUpdate.date)}</p>
-                        <p><span className="font-medium">Work Completed:</span> {selectedProgressUpdate.workCompleted} meters</p>
-                        <p><span className="font-medium">Time Spent:</span> {selectedProgressUpdate.timeSpent} hours</p>
-                      </>
-                    ) : (
-                      <p>Progress information not available</p>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-2">Payment Purposes</h3>
-                  <div className="space-y-1">
-                    {selectedRequest.purposes.map((purpose, index) => (
-                      <div key={index} className="flex justify-between">
-                        <span className="capitalize">{purpose.type}:</span>
-                        <span>₹ {purpose.amount}</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
               
-              <Tabs defaultValue="documentation">
-                <TabsList className="grid grid-cols-2">
-                  <TabsTrigger value="documentation">Documentation</TabsTrigger>
-                  <TabsTrigger value="progress">Progress Photos</TabsTrigger>
-                </TabsList>
-                <TabsContent value="documentation" className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">Payment Purposes</h3>
+                <div className="space-y-4">
                   {selectedRequest.purposes.map((purpose, index) => (
-                    <div key={index}>
-                      <h3 className="text-lg font-semibold capitalize mb-2">{purpose.type} Documentation</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div key={index} className="border rounded-md p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-medium capitalize">{purpose.type}</h4>
+                        <span>₹ {purpose.amount}</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {purpose.images.map((image, imgIndex) => (
-                          <div key={imgIndex} className="space-y-2">
-                            <div className="aspect-video overflow-hidden rounded-md">
-                              <img
-                                src={image.dataUrl}
-                                alt={`${purpose.type} documentation ${imgIndex + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              <p>Timestamp: {new Date(image.timestamp).toLocaleString()}</p>
-                              <p>Location: {image.location.latitude.toFixed(6)}, {image.location.longitude.toFixed(6)}</p>
+                          <div key={imgIndex} className="relative">
+                            <img
+                              src={image.dataUrl}
+                              alt={`${purpose.type} image ${imgIndex + 1}`}
+                              className="w-full aspect-video object-cover rounded-md"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1">
+                              {new Date(image.timestamp).toLocaleTimeString()}
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   ))}
-                </TabsContent>
-                <TabsContent value="progress" className="space-y-4">
-                  {selectedProgressUpdate ? (
-                    <>
-                      <h3 className="text-lg font-semibold mb-2">Progress Photos</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {selectedProgressUpdate.photos.map((photo, index) => (
-                          <PhotoPreview key={index} photo={photo} />
-                        ))}
-                      </div>
-                      
-                      {selectedProgressUpdate.vehicleData && (
-                        <div className="mt-6 space-y-4">
-                          <h3 className="text-lg font-semibold mb-2">Vehicle Data</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="font-medium">Start Meter</h4>
-                              <p className="text-sm mb-2">Reading: {selectedProgressUpdate.vehicleData.startMeter.reading}</p>
-                              <div className="aspect-video overflow-hidden rounded-md">
-                                <img
-                                  src={selectedProgressUpdate.vehicleData.startMeter.photo}
-                                  alt="Start meter"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="font-medium">End Meter</h4>
-                              <p className="text-sm mb-2">Reading: {selectedProgressUpdate.vehicleData.endMeter.reading}</p>
-                              <div className="aspect-video overflow-hidden rounded-md">
-                                <img
-                                  src={selectedProgressUpdate.vehicleData.endMeter.photo}
-                                  alt="End meter"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          <p className="text-sm">
-                            <span className="font-medium">Driver:</span> {selectedProgressUpdate.vehicleData.driver}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-center p-8">
-                      <p>No progress update information available</p>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Add notes about your decision (required for rejection)"
-                  value={checkerNotes}
-                  onChange={(e) => setCheckerNotes(e.target.value)}
-                  rows={3}
-                />
+                </div>
               </div>
               
-              <div className="flex justify-end gap-4">
-                <Button 
-                  variant="destructive" 
-                  onClick={handleReject}
-                  disabled={isApproving || isRejecting}
-                >
-                  {isRejecting ? 'Rejecting...' : 'Reject Request'}
+              {selectedProgress && selectedProgress.photos.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2">Progress Photos</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {selectedProgress.photos.slice(0, 3).map((photo, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={photo.dataUrl}
+                          alt={`Progress photo ${index + 1}`}
+                          className="w-full aspect-video object-cover rounded-md"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1">
+                          {new Date(photo.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedProgress.photos.length > 3 && (
+                    <p className="text-xs mt-2 text-muted-foreground">
+                      +{selectedProgress.photos.length - 3} more photos
+                    </p>
+                  )}
+                </div>
+              )}
+              
+              {selectedProgress && selectedProgress.photos.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2">Location Information</h3>
+                  <MapView location={selectedProgress.photos[0].location} />
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
+                  Close
                 </Button>
-                <Button 
-                  onClick={handleApprove}
-                  disabled={isApproving || isRejecting}
-                >
-                  {isApproving ? 'Approving...' : 'Approve Request'}
+                <Button onClick={() => {
+                  setShowDetailsDialog(false);
+                  handleReview(selectedRequest);
+                }}>
+                  Review
                 </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Review Dialog */}
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Review Payment Request</DialogTitle>
+            <DialogDescription>
+              Approve or reject this payment request for ₹ {selectedRequest?.totalAmount}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Add comments or notes about your decision"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="flex gap-2 pt-4">
+            <Button variant="destructive" onClick={handleReject}>
+              Reject
+            </Button>
+            <Button onClick={handleApprove}>
+              Approve
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

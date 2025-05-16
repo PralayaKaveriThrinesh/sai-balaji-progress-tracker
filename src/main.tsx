@@ -1,8 +1,8 @@
 
 import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
+import App from './App';
 import './index.css';
-import { initializeStorage } from './lib/storage';
+import { initializeStorage } from '@/lib/storage';
 
 // Initialize storage on first load
 initializeStorage();
