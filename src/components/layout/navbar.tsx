@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { useTheme } from "@/context/theme-context";
+import { useTheme } from "@/context/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, Sun, Moon } from "lucide-react";
 
 export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const { theme, toggleTheme } = useTheme();
@@ -11,7 +11,7 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="bg-card shadow-sm">
+    <header className="fixed top-0 left-0 right-0 bg-card shadow-sm z-40">
       <div className="container mx-auto flex justify-between items-center py-3 px-4">
         <div className="flex items-center gap-4">
           <Button
@@ -39,21 +39,9 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                <circle cx="12" cy="12" r="5"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line>
-                <line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-              </svg>
+              <Sun className="h-5 w-5" />
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
+              <Moon className="h-5 w-5" />
             )}
           </Button>
 

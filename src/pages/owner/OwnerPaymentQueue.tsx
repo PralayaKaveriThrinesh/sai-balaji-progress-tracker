@@ -1,59 +1,62 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { format, addDays, isBefore } from 'date-fns';
+import { CalendarIcon, Check, Clock } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { getAllPaymentRequests, getProjectById, updatePaymentRequest } from '@/lib/storage';
-import { PaymentRequest } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
-const OwnerPaymentQueue = () => {
-  const [approvedRequests, setApprovedRequests] = useState<PaymentRequest[]>([]);
+import { getAllPaymentRequests, getProjectById, updatePaymentRequest } from '@/lib/storage';
+import { PaymentRequest, Project } from '@/lib/types';
+
+export default function OwnerPaymentQueue() {
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<PaymentRequest[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('approved');
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
-  const [showPaymentDialog, setShowPaymentDialog] = useState<boolean>(false);
-  const [showScheduleDialog, setShowScheduleDialog] = useState<boolean>(false);
-  const [scheduledDate, setScheduledDate] = useState<Date>(
-    new Date(new Date().setDate(new Date().getDate() + 1)) // Default to tomorrow
-  );
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  
+  const [scheduledDate, setScheduledDate] = useState<Date>(addDays(new Date(), 1));
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Load payment requests
   useEffect(() => {
-    loadApprovedRequests();
+    const requests = getAllPaymentRequests();
+    setPaymentRequests(requests);
   }, []);
-  
-  const loadApprovedRequests = () => {
-    const allPayments = getAllPaymentRequests();
-    setApprovedRequests(allPayments
-      .filter(p => p.status === 'approved')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    );
-    
-    // Clear selected request if it's no longer in the approved list
-    if (selectedRequest && !approvedRequests.some(p => p.id === selectedRequest.id)) {
-      setSelectedRequest(null);
+
+  // Filter payment requests
+  useEffect(() => {
+    let filtered = paymentRequests;
+
+    if (filter === 'pending') {
+      filtered = filtered.filter(req => req.status === 'pending');
+    } else if (filter === 'approved') {
+      filtered = filtered.filter(req => req.status === 'approved');
     }
-  };
-  
-  const handlePayNow = async (request: PaymentRequest) => {
-    setSelectedRequest(request);
-    setShowPaymentDialog(true);
-  };
-  
-  const handleSchedule = async (request: PaymentRequest) => {
-    setSelectedRequest(request);
-    setScheduledDate(new Date(new Date().setDate(new Date().getDate() + 1))); // Reset to tomorrow
-    setShowScheduleDialog(true);
-  };
-  
-  const confirmPayment = async () => {
+
+    if (searchTerm) {
+      filtered = filtered.filter(req => {
+        const project = getProjectById(req.projectId);
+        return (
+          project?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          req.id.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
+    }
+
+    setFilteredRequests(filtered);
+  }, [paymentRequests, filter, searchTerm]);
+
+  // Function to pay immediately
+  const handlePayNow = () => {
     if (!selectedRequest) return;
     
     setIsProcessing(true);
@@ -66,28 +69,28 @@ const OwnerPaymentQueue = () => {
       };
       
       updatePaymentRequest(updatedRequest);
-      toast.success('Payment processed successfully');
-      setShowPaymentDialog(false);
-      loadApprovedRequests();
+      
+      toast.success("Payment processed successfully", {
+        description: `Payment #${selectedRequest.id} has been marked as paid.`
+      });
+      
+      // Update state
+      setPaymentRequests(prev => 
+        prev.map(req => req.id === updatedRequest.id ? updatedRequest : req)
+      );
+      setSelectedRequest(null);
+      setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error processing payment:', error);
-      toast.error('Failed to process payment');
+      console.error("Payment processing error:", error);
+      toast.error("Error processing payment");
     } finally {
       setIsProcessing(false);
     }
   };
-  
-  const confirmSchedule = async () => {
-    if (!selectedRequest) return;
-    
-    // Ensure scheduled date is in the future
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (scheduledDate < today) {
-      toast.error('Scheduled date must be in the future');
-      return;
-    }
+
+  // Function to schedule payment
+  const handleSchedulePayment = () => {
+    if (!selectedRequest || !scheduledDate) return;
     
     setIsProcessing(true);
     
@@ -100,214 +103,244 @@ const OwnerPaymentQueue = () => {
       };
       
       updatePaymentRequest(updatedRequest);
-      toast.success('Payment scheduled successfully');
-      setShowScheduleDialog(false);
-      loadApprovedRequests();
+      
+      toast.success("Payment scheduled successfully", {
+        description: `Payment #${selectedRequest.id} has been scheduled for ${format(scheduledDate, 'PPP')}.`
+      });
+      
+      // Update state
+      setPaymentRequests(prev => 
+        prev.map(req => req.id === updatedRequest.id ? updatedRequest : req)
+      );
+      setSelectedRequest(null);
+      setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error scheduling payment:', error);
-      toast.error('Failed to schedule payment');
+      console.error("Payment scheduling error:", error);
+      toast.error("Error scheduling payment");
     } finally {
       setIsProcessing(false);
     }
   };
-  
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+
+  // Function to handle request selection and open dialog
+  const selectRequest = (request: PaymentRequest) => {
+    setSelectedRequest(request);
+    setIsDialogOpen(true);
   };
-  
-  const getProjectName = (projectId: string) => {
+
+  // Function to get project name
+  const getProjectName = (projectId: string): string => {
     const project = getProjectById(projectId);
-    return project ? project.name : 'Unknown Project';
+    return project?.name || "Unknown Project";
   };
-  
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-6">Payment Queue</h1>
-      <p className="text-muted-foreground mb-8">
-        Process or schedule payments for approved requests.
-      </p>
-      
-      <div className="grid gap-6 md:grid-cols-2">
-        {approvedRequests.map((request) => (
-          <Card key={request.id}>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>{getProjectName(request.projectId)}</span>
-                <span className="text-lg font-normal">₹ {request.totalAmount}</span>
-              </CardTitle>
-              <CardDescription>
-                Requested on {formatDate(request.date)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-medium">Status</p>
-                  <div className="mt-1">
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200">
-                      Approved by Checker
-                    </Badge>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="font-medium">Purposes</p>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {request.purposes.map((purpose, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-0.5 bg-muted rounded-full text-xs"
-                      >
-                        {purpose.type} (₹ {purpose.amount})
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                {request.checkerNotes && (
-                  <div>
-                    <p className="font-medium">Checker Notes</p>
-                    <p className="text-sm text-muted-foreground">{request.checkerNotes}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col md:flex-row gap-2">
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleSchedule(request)}
-              >
-                Schedule Payment
-              </Button>
-              <Button 
-                className="w-full"
-                onClick={() => handlePayNow(request)}
-              >
-                Pay Now
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-        
-        {approvedRequests.length === 0 && (
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle>No Approved Requests</CardTitle>
-              <CardDescription>
-                There are no payment requests awaiting your action.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
+    <div className="container mx-auto py-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Payment Queue</h1>
+        <p className="text-muted-foreground">
+          Review and process approved payment requests.
+        </p>
       </div>
       
-      {/* Payment Confirmation Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Payment</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to process this payment now?
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedRequest && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-md bg-muted">
-                <p><span className="font-medium">Project:</span> {getProjectName(selectedRequest.projectId)}</p>
-                <p className="mt-1"><span className="font-medium">Amount:</span> ₹ {selectedRequest.totalAmount}</p>
-                <p className="mt-1"><span className="font-medium">Requested:</span> {formatDate(selectedRequest.date)}</p>
-              </div>
-              
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowPaymentDialog(false)}
-                  disabled={isProcessing}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={confirmPayment}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Processing...' : 'Confirm Payment'}
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+        <Input
+          placeholder="Search by project name or ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        
+        <div className="flex gap-2">
+          <Button
+            variant={filter === 'all' ? 'default' : 'outline'}
+            onClick={() => setFilter('all')}
+            size="sm"
+          >
+            All
+          </Button>
+          <Button
+            variant={filter === 'approved' ? 'default' : 'outline'}
+            onClick={() => setFilter('approved')}
+            size="sm"
+          >
+            Approved
+          </Button>
+          <Button
+            variant={filter === 'pending' ? 'default' : 'outline'}
+            onClick={() => setFilter('pending')}
+            size="sm"
+          >
+            Pending
+          </Button>
+        </div>
+      </div>
       
-      {/* Schedule Payment Dialog */}
-      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent>
+      {filteredRequests.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center h-64">
+            <p className="text-muted-foreground">No payment requests found.</p>
+            <p className="text-sm text-muted-foreground">
+              {filter === 'approved'
+                ? "There are no approved payment requests waiting to be processed."
+                : filter === 'pending'
+                  ? "There are no pending payment requests."
+                  : "There are no payment requests in the system."}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredRequests.map((request) => {
+            const project = getProjectById(request.projectId);
+            const totalAmount = request.totalAmount;
+            
+            return (
+              <Card key={request.id} className="overflow-hidden">
+                <CardHeader className="bg-muted/50">
+                  <CardTitle className="flex justify-between items-start">
+                    <span>{getProjectName(request.projectId)}</span>
+                    <span className="text-sm font-normal bg-primary/10 text-primary px-2 py-1 rounded-full">
+                      {request.status}
+                    </span>
+                  </CardTitle>
+                  <CardDescription>
+                    Requested on {format(new Date(request.date), 'PPP')}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium">Payment Details</h3>
+                      <div className="mt-1 grid grid-cols-2 gap-1 text-sm">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-medium text-right">₹{totalAmount.toFixed(2)}</span>
+                        <span className="text-muted-foreground">Purposes:</span>
+                        <span className="text-right">
+                          {request.purposes.map(p => p.type).join(', ')}
+                        </span>
+                        <span className="text-muted-foreground">Status:</span>
+                        <span className="text-right capitalize">{request.status}</span>
+                        {request.scheduledDate && (
+                          <>
+                            <span className="text-muted-foreground">Scheduled for:</span>
+                            <span className="text-right">
+                              {format(new Date(request.scheduledDate), 'PPP')}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {request.status === 'approved' && (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => selectRequest(request)}
+                      >
+                        Process Payment
+                      </Button>
+                    )}
+                    
+                    {(request.status === 'scheduled' || request.status === 'paid') && (
+                      <div className="flex items-center justify-center py-2 gap-2 text-muted-foreground">
+                        {request.status === 'scheduled' ? (
+                          <>
+                            <Clock className="h-4 w-4" />
+                            <span>Scheduled for {format(new Date(request.scheduledDate!), 'PPP')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4" />
+                            <span>Payment complete</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+      
+      {/* Payment Process Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Schedule Payment</DialogTitle>
+            <DialogTitle>Process Payment</DialogTitle>
             <DialogDescription>
-              Select a date to schedule this payment.
+              Choose whether to pay now or schedule for later.
             </DialogDescription>
           </DialogHeader>
           
           {selectedRequest && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-md bg-muted">
-                <p><span className="font-medium">Project:</span> {getProjectName(selectedRequest.projectId)}</p>
-                <p className="mt-1"><span className="font-medium">Amount:</span> ₹ {selectedRequest.totalAmount}</p>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <h3 className="font-medium">Payment Details</h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-muted-foreground">Project:</span>
+                  <span>{getProjectName(selectedRequest.projectId)}</span>
+                  <span className="text-muted-foreground">Amount:</span>
+                  <span className="font-medium">₹{selectedRequest.totalAmount.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Request Date:</span>
+                  <span>{format(new Date(selectedRequest.date), 'PPP')}</span>
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="scheduledDate">Payment Date</Label>
-                <Popover>
+                <Label htmlFor="scheduled-date">Schedule for later (optional)</Label>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !scheduledDate && "text-muted-foreground"
-                      )}
+                      className="w-full justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {scheduledDate ? format(scheduledDate, "PPP") : <span>Pick a date</span>}
+                      {scheduledDate ? format(scheduledDate, 'PPP') : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={scheduledDate}
-                      onSelect={(date) => date && setScheduledDate(date)}
-                      disabled={(date) => date < new Date() || date < new Date("1900-01-01")}
+                      onSelect={(date) => {
+                        if (date) {
+                          setScheduledDate(date);
+                          setIsCalendarOpen(false);
+                        }
+                      }}
+                      disabled={(date) => 
+                        isBefore(date, new Date()) || 
+                        isBefore(date, new Date().setHours(0, 0, 0, 0))
+                      }
                       initialFocus
+                      className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
-                <p className="text-xs text-muted-foreground">
-                  Select a future date to schedule the payment.
-                </p>
               </div>
-              
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowScheduleDialog(false)}
-                  disabled={isProcessing}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={confirmSchedule}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Scheduling...' : 'Schedule Payment'}
-                </Button>
-              </DialogFooter>
             </div>
           )}
+          
+          <DialogFooter className="flex sm:justify-between">
+            <Button
+              variant="outline"
+              onClick={() => handlePayNow()}
+              disabled={isProcessing}
+            >
+              Pay Now
+            </Button>
+            <Button
+              onClick={() => handleSchedulePayment()}
+              disabled={isProcessing || !scheduledDate}
+            >
+              Schedule Payment
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-export default OwnerPaymentQueue;
+}

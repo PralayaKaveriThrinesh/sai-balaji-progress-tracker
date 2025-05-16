@@ -37,18 +37,19 @@ export function Layout({ children }: LayoutProps) {
     };
   }, []);
 
-  // Fix for page content being hidden under sidebar
+  // Add a class to body when sidebar is open on mobile
   useEffect(() => {
-    const main = document.querySelector('main');
-    if (main) {
-      if (sidebarOpen && window.innerWidth < 1024) {
-        // Add margin on mobile when sidebar is open
-        main.classList.add('ml-0');
-      } else if (window.innerWidth >= 1024) {
-        // On desktop, always have margin
-        main.classList.add('lg:ml-64');
+    if (window.innerWidth < 1024) {
+      if (sidebarOpen) {
+        document.body.classList.add('sidebar-open');
+      } else {
+        document.body.classList.remove('sidebar-open');
       }
     }
+    
+    return () => {
+      document.body.classList.remove('sidebar-open');
+    };
   }, [sidebarOpen]);
 
   const toggleSidebar = () => {
@@ -71,20 +72,15 @@ export function Layout({ children }: LayoutProps) {
         <Sidebar 
           isOpen={sidebarOpen} 
           toggleSidebar={toggleSidebar} 
-          className="sidebar z-50"
+          className={`sidebar fixed lg:sticky z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         />
         <main 
           className={cn(
-            "flex-1 p-4 transition-all duration-200 ease-in-out",
-            sidebarOpen ? "lg:ml-64" : ""
+            "flex-1 p-4 transition-all duration-200 ease-in-out w-full pt-16",
+            sidebarOpen && window.innerWidth < 1024 ? "pointer-events-none" : "pointer-events-auto"
           )}
-          style={{
-            marginLeft: sidebarOpen && window.innerWidth >= 1024 ? '16rem' : '0'
-          }}
         >
-          <div className="pt-16">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>
