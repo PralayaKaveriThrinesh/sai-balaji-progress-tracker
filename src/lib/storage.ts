@@ -417,6 +417,17 @@ export function deletePaymentRequest(id: string): void {
   setItem(STORAGE_KEYS.PAYMENT_REQUESTS, filteredRequests);
 }
 
+// Helper function specifically for finding payment requests by leader ID
+export function getPaymentRequestsByLeaderId(leaderId: string): PaymentRequest[] {
+  // First get all projects belonging to this leader
+  const leaderProjects = getProjectsByLeaderId(leaderId);
+  const projectIds = leaderProjects.map(project => project.id);
+  
+  // Then get all payment requests for these projects
+  const allPayments = getAllPaymentRequests();
+  return allPayments.filter(payment => projectIds.includes(payment.projectId));
+}
+
 // Correction requests
 export function getAllCorrectionRequests(): CorrectionRequest[] {
   return getItem<CorrectionRequest[]>(STORAGE_KEYS.CORRECTION_REQUESTS) || [];

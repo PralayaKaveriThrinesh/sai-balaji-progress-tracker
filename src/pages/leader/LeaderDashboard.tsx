@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { getProjectsByLeaderId, getPaymentRequestsByLeaderId } from '@/lib/storage';
+import { getProjectsByLeaderId, getAllPaymentRequests } from '@/lib/storage';
 import { Project, PaymentRequest } from '@/lib/types';
 
 const LeaderDashboard = () => {
@@ -19,8 +19,14 @@ const LeaderDashboard = () => {
       const userProjects = getProjectsByLeaderId(user.id);
       setProjects(userProjects);
       
-      const payments = getPaymentRequestsByLeaderId(user.id).slice(0, 3);
-      setRecentPayments(payments);
+      // Use getAllPaymentRequests and filter by leaderId instead
+      const allPayments = getAllPaymentRequests();
+      const leaderPayments = allPayments
+        .filter(payment => 
+          userProjects.some(project => project.id === payment.projectId)
+        )
+        .slice(0, 3);
+      setRecentPayments(leaderPayments);
     }
   }, [user]);
 
