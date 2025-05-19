@@ -19,6 +19,11 @@ export function asString<T extends string>(value: unknown): T {
   return value as T;
 }
 
+// Add a specific type assertion function for UserRole
+export function asUserRole<T extends string>(value: string): T {
+  return value as T;
+}
+
 // Generate vibrant gradient background based on index
 export function getGradientByIndex(index: number): string {
   const gradients = [

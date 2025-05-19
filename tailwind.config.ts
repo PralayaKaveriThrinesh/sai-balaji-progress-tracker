@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -72,6 +73,9 @@ export default {
 					'pastel-blue': '#93C5FD',
 					'pastel-yellow': '#FEF08A',
 					'pastel-pink': '#FBCFE8',
+					'pastel-purple': '#D8B4FE', // Added the missing pastel-purple color
+					'pastel-orange': '#FDBA74', // Added another pastel color for variety
+					'pastel-red': '#FCA5A5', // Added another pastel color for variety
 				}
 			},
 			borderRadius: {

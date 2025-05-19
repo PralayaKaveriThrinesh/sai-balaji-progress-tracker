@@ -11,6 +11,8 @@ export const FullscreenChartWrapper = ({ children, title }: FullscreenChartWrapp
   return (
     <FullscreenChart 
       title={title}
+      onClose={() => {}}
+      isOpen={false}
     >
       {children}
     </FullscreenChart>
