@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +14,8 @@ import {
 import { MapView } from '@/components/shared/map-view';
 import { getProjectsByLeaderId, getProgressUpdatesByProjectId, getVehicleById } from '@/lib/storage';
 import { Project, ProgressUpdate, Vehicle } from '@/lib/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { File } from 'lucide-react';
 
 const LeaderViewProgress = () => {
   const { user } = useAuth();
@@ -66,6 +67,16 @@ const LeaderViewProgress = () => {
     const project = projects.find(p => p.id === projectId);
     if (!project || project.totalWork === 0) return 0;
     return Math.min(100, Math.round((project.completedWork / project.totalWork) * 100));
+  };
+  
+  const getGradientByIndex = (index: number) => {
+    const gradients = [
+      'bg-gradient-to-r from-primary to-secondary',
+      'bg-gradient-to-r from-secondary to-primary',
+      'bg-gradient-to-r from-amber-500 to-amber-300',
+      'bg-gradient-to-r from-amber-300 to-amber-500'
+    ];
+    return gradients[index];
   };
   
   return (
@@ -140,10 +151,10 @@ const LeaderViewProgress = () => {
       {progressUpdates.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
           {progressUpdates.map((progress) => (
-            <Card key={progress.id}>
+            <Card key={progress.id} className={getGradientByIndex(parseInt(progress.id.slice(-2), 16) % 4)}>
               <CardHeader>
                 <CardTitle>Update on {formatDate(progress.date)}</CardTitle>
-                <CardDescription>
+                <CardDescription className="text-foreground/70">
                   {progress.completedWork} meters completed in {progress.timeTaken} hours
                 </CardDescription>
               </CardHeader>
@@ -166,6 +177,14 @@ const LeaderViewProgress = () => {
                   <p className="text-xs text-muted-foreground">
                     + {progress.photos.length - 3} more photos
                   </p>
+                )}
+                
+                {/* Display document count if available */}
+                {progress.documents && progress.documents.length > 0 && (
+                  <div className="mt-2 p-2 bg-accent/20 rounded-md flex items-center">
+                    <File className="h-4 w-4 mr-2" />
+                    <p className="text-sm font-medium">{progress.documents.length} document{progress.documents.length > 1 ? 's' : ''} attached</p>
+                  </div>
                 )}
                 
                 {progress.vehicleId && (
@@ -247,30 +266,72 @@ const LeaderViewProgress = () => {
                 </div>
               )}
               
-              <div>
-                <h3 className="font-semibold mb-2">Progress Photos</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {selectedProgress.photos.map((photo, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={photo.dataUrl}
-                        alt={`Progress photo ${index + 1}`}
-                        className="w-full object-cover rounded-md"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
-                        {new Date(photo.timestamp).toLocaleTimeString()}
-                      </div>
+              <Tabs defaultValue="photos" className="w-full">
+                <TabsList className="grid grid-cols-2 mb-4">
+                  <TabsTrigger value="photos">Photos</TabsTrigger>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="photos">
+                  <div>
+                    <h3 className="font-semibold mb-2">Progress Photos</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {selectedProgress.photos.map((photo, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={photo.dataUrl}
+                            alt={`Progress photo ${index + 1}`}
+                            className="w-full object-cover rounded-md"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
+                            {new Date(photo.timestamp).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-              
-              {selectedProgress.photos.length > 0 && selectedProgress.photos[0].location && (
-                <div>
-                  <h3 className="font-semibold mb-2">Location</h3>
-                  <MapView location={selectedProgress.photos[0].location} />
-                </div>
-              )}
+                  </div>
+                  
+                  {selectedProgress.photos.length > 0 && selectedProgress.photos[0].location && (
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Location</h3>
+                      <MapView location={selectedProgress.photos[0].location} />
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="documents">
+                  <div>
+                    <h3 className="font-semibold mb-2">Attached Documents</h3>
+                    {selectedProgress.documents && selectedProgress.documents.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedProgress.documents.map((doc) => (
+                          <div key={doc.id} className="flex items-center p-3 bg-muted/30 rounded-lg border border-border">
+                            <File className="h-8 w-8 mr-3 text-primary" />
+                            <div>
+                              <p className="font-medium">{doc.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(doc.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="ml-auto"
+                              onClick={() => window.open(doc.dataUrl, '_blank')}
+                            >
+                              View
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground bg-muted/20 rounded-md">
+                        No documents attached to this update.
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
               
               {selectedProgress.startMeterReading && selectedProgress.endMeterReading && (
                 <div>

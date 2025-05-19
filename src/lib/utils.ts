@@ -20,8 +20,8 @@ export function asString<T extends string>(value: unknown): T {
 }
 
 // Add a specific type assertion function for UserRole
-export function asUserRole<T extends string>(value: string): T {
-  return value as T;
+export function asUserRole(value: string): string {
+  return value;
 }
 
 // Generate vibrant gradient background based on index

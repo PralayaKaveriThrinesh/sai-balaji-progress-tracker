@@ -11,8 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import { getProjectsByLeaderId, getAllVehicles, addProgressUpdate, updateProject } from '@/lib/storage';
 import { Project, Vehicle, PhotoWithMetadata, ProgressUpdate } from '@/lib/types';
 import { PhotoPreview } from '@/components/shared/photo-preview';
+import { DocumentUpload, DocumentFile } from '@/components/shared/document-upload';
 import { Progress } from '@/components/ui/progress';
-import { Camera, Clock, Upload, Percent, X } from 'lucide-react';
+import { Camera, Clock, Upload, Percent, X, File } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const LeaderAddProgress = () => {
   const { user } = useAuth();
@@ -30,6 +32,7 @@ const LeaderAddProgress = () => {
   const [startMeterReading, setStartMeterReading] = useState<PhotoWithMetadata | null>(null);
   const [endMeterReading, setEndMeterReading] = useState<PhotoWithMetadata | null>(null);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
+  const [documents, setDocuments] = useState<DocumentFile[]>([]);
   
   useEffect(() => {
     if (user) {
@@ -67,6 +70,14 @@ const LeaderAddProgress = () => {
   
   const handleRemovePhoto = (index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleDocumentUpload = (document: DocumentFile) => {
+    setDocuments(prev => [...prev, document]);
+  };
+  
+  const handleRemoveDocument = (id: string) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== id));
   };
   
   const isToday = (dateString: string) => {
@@ -124,7 +135,7 @@ const LeaderAddProgress = () => {
     setIsSubmitting(true);
     
     try {
-      // Create progress update
+      // Create progress update with documents
       const progressData: Omit<ProgressUpdate, 'id'> = {
         projectId: selectedProject,
         date: new Date().toISOString(),
@@ -135,6 +146,7 @@ const LeaderAddProgress = () => {
         vehicleId: useVehicle ? selectedVehicle : undefined,
         startMeterReading: useVehicle ? startMeterReading : undefined,
         endMeterReading: useVehicle ? endMeterReading : undefined,
+        documents: documents, // Add the documents field
       };
       
       addProgressUpdate(progressData);
@@ -299,43 +311,83 @@ const LeaderAddProgress = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Progress Photos</CardTitle>
+            <CardTitle>Documentation</CardTitle>
             <CardDescription>
-              Take photos to document your progress
+              Take photos and upload documents to track your progress
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <PhotoPreview 
-              onCapture={handlePhotoCapture} 
-              buttonText="Capture Progress Photo"
-            />
-            
-            {photos.length > 0 && (
-              <div className="mt-4">
-                <h3 className="font-medium mb-2">Captured Photos:</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {photos.map((photo, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={photo.dataUrl}
-                        alt={`Progress photo ${index + 1}`}
-                        className="w-full h-24 object-cover rounded"
-                      />
-                      <button
-                        onClick={() => handleRemovePhoto(index)}
-                        className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                        type="button"
-                      >
-                        <X size={16} />
-                      </button>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
-                        {new Date(photo.timestamp).toLocaleTimeString()}
-                      </div>
+            <Tabs defaultValue="photos" className="w-full">
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="photos">Photos</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="photos" className="space-y-4">
+                <PhotoPreview 
+                  onCapture={handlePhotoCapture} 
+                  buttonText="Capture Progress Photo"
+                />
+                
+                {photos.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="font-medium mb-2">Captured Photos:</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {photos.map((photo, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={photo.dataUrl}
+                            alt={`Progress photo ${index + 1}`}
+                            className="w-full h-24 object-cover rounded"
+                          />
+                          <button
+                            onClick={() => handleRemovePhoto(index)}
+                            className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                            type="button"
+                          >
+                            <X size={16} />
+                          </button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
+                            {new Date(photo.timestamp).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="documents" className="space-y-4">
+                <DocumentUpload onUpload={handleDocumentUpload} />
+                
+                {documents.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="font-medium mb-2">Uploaded Documents:</h3>
+                    <div className="space-y-2">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center p-3 bg-muted/20 rounded-lg border border-border">
+                          <File className="h-6 w-6 mr-3 text-primary" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{doc.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(doc.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="ml-2" 
+                            onClick={() => handleRemoveDocument(doc.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
             
             {useVehicle && (
               <div className="mt-6 space-y-4">

@@ -1,5 +1,5 @@
 
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { FullscreenChart } from './fullscreen-chart';
 
 interface FullscreenChartWrapperProps {
@@ -8,13 +8,25 @@ interface FullscreenChartWrapperProps {
 }
 
 export const FullscreenChartWrapper = ({ children, title }: FullscreenChartWrapperProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+  
+  const handleOpen = () => {
+    setIsOpen(true);
+  };
+  
   return (
-    <FullscreenChart 
-      title={title}
-      onClose={() => {}}
-      isOpen={false}
-    >
-      {children}
-    </FullscreenChart>
+    <div onClick={handleOpen} className="cursor-pointer">
+      <FullscreenChart 
+        title={title}
+        onClose={handleClose}
+        isOpen={isOpen}
+      >
+        {React.cloneElement(children)}
+      </FullscreenChart>
+    </div>
   );
 };
