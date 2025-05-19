@@ -59,14 +59,14 @@ export function Layout({ children }: LayoutProps) {
   // Don't show sidebar and navbar if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background bg-hero-pattern">
         <main className="flex-1">{children}</main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background bg-hero-pattern">
       <Navbar toggleSidebar={toggleSidebar} />
       <div className="flex">
         <Sidebar 
@@ -77,6 +77,7 @@ export function Layout({ children }: LayoutProps) {
         <main 
           className={cn(
             "flex-1 p-4 transition-all duration-200 ease-in-out w-full pt-16",
+            "animate-fade-in",
             sidebarOpen && window.innerWidth < 1024 ? "pointer-events-none" : "pointer-events-auto"
           )}
         >

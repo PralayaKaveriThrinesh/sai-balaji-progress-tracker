@@ -32,11 +32,16 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
   };
 
   const renderLeaderMenu = () => (
-    <div className="flex flex-col space-y-1">
+    <div className="flex flex-col space-y-2">
       <Link to="/leader" onClick={toggleSidebar}>
         <Button
           variant={isActive('/leader') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={cn(
+            "w-full justify-start rounded-lg text-sm font-medium transition-all",
+            isActive('/leader') 
+              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
+              : "hover:bg-white/20 hover:text-white"
+          )}
         >
           Dashboard
         </Button>
@@ -45,7 +50,12 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
       <Link to="/leader/create-project" onClick={toggleSidebar}>
         <Button
           variant={isActive('/leader/create-project') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={cn(
+            "w-full justify-start rounded-lg text-sm font-medium transition-all",
+            isActive('/leader/create-project') 
+              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
+              : "hover:bg-white/20 hover:text-white"
+          )}
         >
           Create Project
         </Button>
@@ -54,7 +64,12 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
       <Link to="/leader/add-progress" onClick={toggleSidebar}>
         <Button
           variant={isActive('/leader/add-progress') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={cn(
+            "w-full justify-start rounded-lg text-sm font-medium transition-all",
+            isActive('/leader/add-progress') 
+              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
+              : "hover:bg-white/20 hover:text-white"
+          )}
         >
           Add Progress
         </Button>
@@ -63,7 +78,12 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
       <Link to="/leader/view-progress" onClick={toggleSidebar}>
         <Button
           variant={isActive('/leader/view-progress') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={cn(
+            "w-full justify-start rounded-lg text-sm font-medium transition-all",
+            isActive('/leader/view-progress') 
+              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
+              : "hover:bg-white/20 hover:text-white"
+          )}
         >
           View Progress
         </Button>
@@ -72,7 +92,12 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
       <Link to="/leader/request-payment" onClick={toggleSidebar}>
         <Button
           variant={isActive('/leader/request-payment') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={cn(
+            "w-full justify-start rounded-lg text-sm font-medium transition-all",
+            isActive('/leader/request-payment') 
+              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
+              : "hover:bg-white/20 hover:text-white"
+          )}
         >
           Request Payment
         </Button>
@@ -81,7 +106,12 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
       <Link to="/leader/view-payment" onClick={toggleSidebar}>
         <Button
           variant={isActive('/leader/view-payment') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={cn(
+            "w-full justify-start rounded-lg text-sm font-medium transition-all",
+            isActive('/leader/view-payment') 
+              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
+              : "hover:bg-white/20 hover:text-white"
+          )}
         >
           View Payments
         </Button>
@@ -222,19 +252,20 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
     <aside
       className={cn(
         "fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-border pt-16 z-20 transition-transform duration-200 ease-in-out transform lg:transform-none lg:relative",
+        "backdrop-blur-sm shadow-lg shadow-sidebar/10",
         isOpen ? "translate-x-0" : "-translate-x-full",
         className
       )}
     >
       <div className="flex flex-col h-full p-4 overflow-y-auto">
-        <div className="mb-4 border-b pb-4 border-border">
+        <div className="mb-4 border-b pb-4 border-border/50">
           <div className="flex items-center justify-between mb-4">
-            <span className="font-bold text-xl">Navigation</span>
+            <span className="font-bold text-xl text-white">Navigation</span>
             {/* Close button for mobile */}
             <Button
               variant="ghost" 
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-white hover:bg-white/20"
               onClick={toggleSidebar}
             >
               <X className="h-5 w-5" />

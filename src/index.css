@@ -5,8 +5,8 @@
 
 @layer base {
   :root {
-    /* Light mode - vibrant color scheme with shiny effects */
-    --background: 210 40% 98%; /* Light background */
+    /* Light mode - vibrant & cheerful color scheme */
+    --background: 210 40% 99%; /* Even lighter background */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%; /* Pure white cards */
@@ -15,16 +15,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 262 80% 60%; /* Vibrant purple accent */
+    --primary: 262 95% 65%; /* More vibrant purple accent */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 270 70% 95%; /* Lighter purple */
+    --secondary: 270 70% 97%; /* Lighter purple */
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 270 20% 90%;
+    --muted: 270 20% 94%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 191 80% 65%; /* Bright turquoise */
+    --accent: 191 95% 65%; /* Brighter turquoise */
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -32,18 +32,18 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 80% 60%;
+    --ring: 262 95% 65%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 262 70% 15%;
+    --sidebar-background: 262 70% 65%; /* Brighter sidebar */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 191 80% 65%;
+    --sidebar-primary: 191 95% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 262 50% 25%;
+    --sidebar-accent: 262 50% 75%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 262 50% 20%;
-    --sidebar-ring: 191 80% 65%;
+    --sidebar-border: 262 50% 70%;
+    --sidebar-ring: 191 95% 65%;
   }
 
   .dark {
@@ -57,7 +57,7 @@
     --popover: 262 25% 15%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 191 80% 65%; /* Bright turquoise primary */
+    --primary: 191 95% 65%; /* Bright turquoise primary */
     --primary-foreground: 262 50% 10%;
 
     --secondary: 262 50% 20%;
@@ -66,7 +66,7 @@
     --muted: 262 30% 20%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 262 70% 40%; /* Rich purple accent */
+    --accent: 262 70% 60%; /* Rich purple accent */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 60.6%;
@@ -74,16 +74,16 @@
 
     --border: 262 40% 25%;
     --input: 262 40% 25%;
-    --ring: 191 80% 65%;
+    --ring: 191 95% 65%;
 
     --sidebar-background: 262 40% 15%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 191 80% 65%;
+    --sidebar-primary: 191 95% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 262 50% 25%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 262 50% 30%;
-    --sidebar-ring: 191 80% 65%;
+    --sidebar-ring: 191 95% 65%;
   }
 }
 
@@ -141,11 +141,14 @@
   }
 }
 
-/* Shiny card effect */
+/* Enhance the Shiny card effect */
 .card {
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.35s ease;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .card::before {
@@ -158,7 +161,7 @@
   background: linear-gradient(
     to bottom right,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.1) 100%
+    rgba(255, 255, 255, 0.2) 100%
   );
   transform: rotate(30deg);
   pointer-events: none;
@@ -167,7 +170,8 @@
 /* Enhanced card hover effects */
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(155, 135, 245, 0.3);
 }
 
 /* Gradient text */
@@ -248,4 +252,34 @@
 .card-glow:hover {
   @apply border-primary/50;
   box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+}
+
+/* Add new vibrant navigation button styles */
+.nav-button {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300;
+  @apply bg-white/50 hover:bg-primary hover:text-white;
+  @apply font-medium text-sm;
+  @apply shadow-sm hover:shadow-md;
+}
+
+.nav-button-active {
+  @apply bg-primary text-white;
+  @apply shadow-md shadow-primary/25;
+}
+
+/* New card variants */
+.card-gradient-1 {
+  @apply bg-gradient-to-br from-custom-pastel-blue/30 to-custom-pastel-purple/30;
+}
+
+.card-gradient-2 {
+  @apply bg-gradient-to-br from-custom-pastel-green/30 to-custom-pastel-blue/30;
+}
+
+.card-gradient-3 {
+  @apply bg-gradient-to-br from-custom-pastel-yellow/30 to-custom-pastel-green/30;
+}
+
+.card-gradient-4 {
+  @apply bg-gradient-to-br from-custom-pastel-pink/30 to-custom-pastel-blue/30;
 }
