@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -109,19 +108,23 @@ const AdminCredentials = () => {
         role: newUserData.role as 'admin' | 'leader' | 'checker' | 'owner'
       });
       
-      // Update state
-      setUsers([...users, createdUser]);
-      
-      // Close dialog and reset form
-      setShowAddDialog(false);
-      setNewUserData({
-        name: '',
-        email: '',
-        password: '',
-        role: 'leader'
-      });
-      
-      toast.success("User created successfully");
+      if (createdUser) {
+        // Update state - only add if user was created successfully
+        setUsers(prevUsers => [...prevUsers, createdUser]);
+        
+        // Close dialog and reset form
+        setShowAddDialog(false);
+        setNewUserData({
+          name: '',
+          email: '',
+          password: '',
+          role: 'leader'
+        });
+        
+        toast.success("User created successfully");
+      } else {
+        toast.error("Failed to create user");
+      }
     } catch (error) {
       console.error("Error creating user:", error);
       toast.error("Failed to create user");
@@ -163,14 +166,18 @@ const AdminCredentials = () => {
         password: editUserData.password || selectedUser.password // Only update if provided
       });
       
-      // Update state
-      setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
-      
-      // Close dialog
-      setShowEditDialog(false);
-      setSelectedUser(null);
-      
-      toast.success("User updated successfully");
+      if (updatedUser) {
+        // Update state - only update if user was updated successfully
+        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
+        
+        // Close dialog
+        setShowEditDialog(false);
+        setSelectedUser(null);
+        
+        toast.success("User updated successfully");
+      } else {
+        toast.error("Failed to update user");
+      }
     } catch (error) {
       console.error("Error updating user:", error);
       toast.error("Failed to update user");
@@ -185,7 +192,7 @@ const AdminCredentials = () => {
       deleteUser(selectedUser.id);
       
       // Update state
-      setUsers(users.filter(u => u.id !== selectedUser.id));
+      setUsers(prevUsers => prevUsers.filter(u => u.id !== selectedUser.id));
       
       // Close dialog
       setShowDeleteDialog(false);

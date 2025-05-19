@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,26 +94,31 @@ const AdminDrivers = () => {
         name: newDriverData.name,
         licenseNumber: newDriverData.licenseNumber,
         licenseType: newDriverData.licenseType,
-        experienceYears: parseInt(newDriverData.experienceYears),
+        experience: parseInt(newDriverData.experienceYears), // Fixed property name
         contactNumber: newDriverData.contactNumber,
-        address: newDriverData.address
+        address: newDriverData.address,
+        isExternal: false // Default value
       });
       
-      // Update state
-      setDrivers([...drivers, createdDriver]);
-      
-      // Close dialog and reset form
-      setShowAddDialog(false);
-      setNewDriverData({
-        name: '',
-        licenseNumber: '',
-        licenseType: 'LMV',
-        experienceYears: '0',
-        contactNumber: '',
-        address: ''
-      });
-      
-      toast.success("Driver added successfully");
+      if (createdDriver) {
+        // Update state
+        setDrivers(prevDrivers => [...prevDrivers, createdDriver]);
+        
+        // Close dialog and reset form
+        setShowAddDialog(false);
+        setNewDriverData({
+          name: '',
+          licenseNumber: '',
+          licenseType: 'LMV',
+          experienceYears: '0',
+          contactNumber: '',
+          address: ''
+        });
+        
+        toast.success("Driver added successfully");
+      } else {
+        toast.error("Failed to add driver");
+      }
     } catch (error) {
       console.error("Error adding driver:", error);
       toast.error("Failed to add driver");
@@ -146,19 +150,23 @@ const AdminDrivers = () => {
         name: editDriverData.name,
         licenseNumber: editDriverData.licenseNumber,
         licenseType: editDriverData.licenseType,
-        experienceYears: parseInt(editDriverData.experienceYears),
+        experience: parseInt(editDriverData.experienceYears), // Fixed property name
         contactNumber: editDriverData.contactNumber,
         address: editDriverData.address
       });
       
-      // Update state
-      setDrivers(drivers.map(d => d.id === updatedDriver.id ? updatedDriver : d));
-      
-      // Close dialog
-      setShowEditDialog(false);
-      setSelectedDriver(null);
-      
-      toast.success("Driver updated successfully");
+      if (updatedDriver) {
+        // Update state
+        setDrivers(prevDrivers => prevDrivers.map(d => d.id === updatedDriver.id ? updatedDriver : d));
+        
+        // Close dialog
+        setShowEditDialog(false);
+        setSelectedDriver(null);
+        
+        toast.success("Driver updated successfully");
+      } else {
+        toast.error("Failed to update driver");
+      }
     } catch (error) {
       console.error("Error updating driver:", error);
       toast.error("Failed to update driver");
@@ -173,7 +181,7 @@ const AdminDrivers = () => {
       deleteDriver(selectedDriver.id);
       
       // Update state
-      setDrivers(drivers.filter(d => d.id !== selectedDriver.id));
+      setDrivers(prevDrivers => prevDrivers.filter(d => d.id !== selectedDriver.id));
       
       // Close dialog
       setShowDeleteDialog(false);
@@ -192,7 +200,7 @@ const AdminDrivers = () => {
       name: driver.name,
       licenseNumber: driver.licenseNumber,
       licenseType: driver.licenseType,
-      experienceYears: driver.experienceYears.toString(),
+      experienceYears: driver.experience.toString(), // Fixed property name
       contactNumber: driver.contactNumber || '',
       address: driver.address || ''
     });
@@ -231,18 +239,18 @@ const AdminDrivers = () => {
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredDrivers.map((driver) => (
-          <Card key={driver.id}>
-            <CardHeader>
+          <Card key={driver.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
               <CardTitle>{driver.name}</CardTitle>
               <CardDescription>
                 License: {driver.licenseNumber} ({driver.licenseType})
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <div className="space-y-2">
                 <div>
                   <p className="text-sm font-medium">Experience:</p>
-                  <p className="text-sm text-muted-foreground">{driver.experienceYears} years</p>
+                  <p className="text-sm text-muted-foreground">{driver.experience} years</p>
                 </div>
                 
                 {driver.contactNumber && (
@@ -260,17 +268,17 @@ const AdminDrivers = () => {
                 )}
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between gap-2">
+            <CardFooter className="flex justify-between gap-2 bg-muted/20">
               <Button 
                 variant="outline" 
-                className="flex-1"
+                className="flex-1 hover:bg-primary/10"
                 onClick={() => openEditDialog(driver)}
               >
                 Edit
               </Button>
               <Button 
                 variant="destructive" 
-                className="flex-1"
+                className="flex-1 hover:bg-destructive/90"
                 onClick={() => openDeleteDialog(driver)}
               >
                 Delete
@@ -494,7 +502,7 @@ const AdminDrivers = () => {
               <div className="p-4 border rounded-md">
                 <div><strong>Name:</strong> {selectedDriver.name}</div>
                 <div><strong>License:</strong> {selectedDriver.licenseNumber} ({selectedDriver.licenseType})</div>
-                <div><strong>Experience:</strong> {selectedDriver.experienceYears} years</div>
+                <div><strong>Experience:</strong> {selectedDriver.experience} years</div>
                 {selectedDriver.contactNumber && (
                   <div><strong>Contact:</strong> {selectedDriver.contactNumber}</div>
                 )}

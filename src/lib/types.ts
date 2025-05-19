@@ -34,6 +34,7 @@ export interface Driver {
   licenseNumber: string;
   licenseType: string;
   experience: number;
+  experienceYears?: number; // For backward compatibility
   isExternal: boolean;
   contactNumber?: string;
   address?: string;
@@ -102,4 +103,3 @@ export interface LeaderProgressStats {
   completionPercentage: number; // Overall completion percentage
   recentUpdates: ProgressUpdate[];
 }
-

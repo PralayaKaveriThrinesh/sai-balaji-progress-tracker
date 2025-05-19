@@ -94,6 +94,7 @@
 
   body {
     @apply bg-background text-foreground;
+    background-image: var(--gradient-background);
   }
 }
 
@@ -144,6 +145,7 @@
 .card {
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .card::before {
@@ -162,38 +164,47 @@
   pointer-events: none;
 }
 
+/* Enhanced card hover effects */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
 /* Gradient text */
 .gradient-text {
   @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
 }
 
+/* Enhanced gradient text */
+.gradient-text-animated {
+  @apply bg-gradient-to-r from-primary via-custom-vivid-purple to-accent bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_100%];
+}
+
 /* Glow effects */
 .glow-sm {
-  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
 }
 
 .glow-md {
-  box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.4);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
 }
 
 .glow-lg {
-  box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.5);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
 }
 
 /* Animation classes */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
 
 /* Custom button styles */
 .btn-gradient {
-  @apply bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90;
+  @apply bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all duration-300;
+}
+
+.btn-gradient:hover {
+  @apply shadow-md shadow-primary/20;
 }
 
 /* Glass effect */
@@ -203,4 +214,38 @@
 
 .glass-dark {
   @apply bg-black/20 backdrop-blur-md border border-white/10;
+}
+
+/* Enhanced form inputs */
+.input-enhanced {
+  @apply bg-background/50 border-primary/20 focus-visible:ring-primary focus-visible:ring-opacity-50 focus-visible:border-primary transition-all duration-300;
+}
+
+/* Form label animation */
+.form-label {
+  @apply transition-all duration-300;
+}
+
+.form-group:focus-within .form-label {
+  @apply text-primary;
+}
+
+/* Enhanced button with hover effect */
+.button-enhanced {
+  @apply relative overflow-hidden transition-all duration-300;
+}
+
+.button-enhanced::after {
+  content: '';
+  @apply absolute inset-0 bg-white/20 scale-x-0 origin-left transition-transform duration-300;
+}
+
+.button-enhanced:hover::after {
+  @apply scale-x-100;
+}
+
+/* Card border glow on hover */
+.card-glow:hover {
+  @apply border-primary/50;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
 }
