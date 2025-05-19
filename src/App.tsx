@@ -4,14 +4,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/auth-context";
 import { ThemeProvider } from "@/context/theme-provider";
 import { Layout } from "@/components/layout/layout";
+import { AuthProvider } from "@/context/auth-context";
 
 // Pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
 
 // Leader Pages
 import LeaderDashboard from "@/pages/leader/LeaderDashboard";
@@ -44,8 +45,8 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
@@ -53,6 +54,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               
               {/* Leader Routes */}
               <Route path="/leader" element={<Layout><LeaderDashboard /></Layout>} />
@@ -86,8 +88,8 @@ const App = () => (
             </Routes>
           </TooltipProvider>
         </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

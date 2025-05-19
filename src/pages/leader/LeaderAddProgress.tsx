@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +12,7 @@ import { getProjectsByLeaderId, getAllVehicles, addProgressUpdate, updateProject
 import { Project, Vehicle, PhotoWithMetadata, ProgressUpdate } from '@/lib/types';
 import { PhotoPreview } from '@/components/shared/photo-preview';
 import { Progress } from '@/components/ui/progress';
-import { Camera, Clock, Upload, Percent } from 'lucide-react';
+import { Camera, Clock, Upload, Percent, X } from 'lucide-react';
 
 const LeaderAddProgress = () => {
   const { user } = useAuth();

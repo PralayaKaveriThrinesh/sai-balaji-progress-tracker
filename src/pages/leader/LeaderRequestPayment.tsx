@@ -1,330 +1,254 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/sonner';
-import { Textarea } from '@/components/ui/textarea';
-import { useNavigate } from 'react-router-dom';
-import { getProjectsByLeaderId, createPaymentRequest } from '@/lib/storage';
-import { Project, PaymentPurpose, PhotoWithMetadata } from '@/lib/types';
 import { PhotoPreview } from '@/components/shared/photo-preview';
-import { Check, Plus, X } from 'lucide-react';
+import { Project, PaymentRequest, PaymentPurpose, PhotoWithMetadata } from '@/lib/types';
+import { getAllProjects, createPaymentRequest, getProjectById } from '@/lib/storage';
+import { Plus, X } from 'lucide-react';
 
-const PAYMENT_TYPES = ["food", "fuel", "labour", "vehicle", "water", "other"];
-
-const LeaderRequestPayment = () => {
-  const { user } = useAuth();
+const LeaderRequestPayment: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [purposes, setPurposes] = useState<PaymentPurpose[]>([]);
+  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [purposes, setPurposes] = useState<Partial<PaymentPurpose>[]>([
-    { type: "", amount: 0, images: [] }
-  ]);
-  
+  const [amount, setAmount] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Fix the type issues
+  const [paymentType, setPaymentType] = useState<"food" | "fuel" | "labour" | "vehicle" | "water" | "other">("food");
+
   useEffect(() => {
-    if (user) {
-      const userProjects = getProjectsByLeaderId(user.id);
-      setProjects(userProjects);
+    if (!user) {
+      navigate('/login');
+      return;
     }
-  }, [user]);
-  
+
+    const allProjects = getAllProjects().filter(project => project.leaderId === user.id);
+    setProjects(allProjects);
+  }, [user, navigate]);
+
   useEffect(() => {
     // Calculate total amount whenever purposes change
-    const sum = purposes.reduce((total, purpose) => {
-      return total + (purpose.amount || 0);
-    }, 0);
-    setTotalAmount(sum);
+    const newTotal = purposes.reduce((acc, purpose) => acc + purpose.amount, 0);
+    setTotalAmount(newTotal);
   }, [purposes]);
-  
-  const handlePurposeTypeChange = (index: number, value: string) => {
-    const updatedPurposes = [...purposes];
-    updatedPurposes[index] = { ...updatedPurposes[index], type: value };
-    setPurposes(updatedPurposes);
-  };
-  
-  const handlePurposeAmountChange = (index: number, value: string) => {
-    const amount = parseFloat(value) || 0;
-    const updatedPurposes = [...purposes];
-    updatedPurposes[index] = { ...updatedPurposes[index], amount };
-    setPurposes(updatedPurposes);
-  };
-  
-  const handleAddPhoto = (index: number, photo: PhotoWithMetadata) => {
-    const updatedPurposes = [...purposes];
-    const currentImages = updatedPurposes[index].images || [];
-    updatedPurposes[index] = { 
-      ...updatedPurposes[index], 
-      images: [...currentImages, photo] 
-    };
-    setPurposes(updatedPurposes);
-  };
-  
-  const handleRemovePhoto = (purposeIndex: number, photoIndex: number) => {
-    const updatedPurposes = [...purposes];
-    const currentImages = [...(updatedPurposes[purposeIndex].images || [])];
-    currentImages.splice(photoIndex, 1);
-    updatedPurposes[purposeIndex] = { 
-      ...updatedPurposes[purposeIndex], 
-      images: currentImages
-    };
-    setPurposes(updatedPurposes);
-  };
-  
+
   const addPurpose = () => {
-    setPurposes([...purposes, { type: "", amount: 0, images: [] }]);
+    if (!amount) {
+      toast({
+        title: "Error",
+        description: "Please enter an amount for the payment purpose.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Replace any instances of empty string "" with "food" as the default value
+    // And ensure all payment purposes have a valid type
+    const newPurpose: PaymentPurpose = {
+      type: paymentType, // Use "food" instead of ""
+      amount: Number(amount),
+      images: []
+    };
+
+    setPurposes([...purposes, newPurpose]);
+    setAmount(''); // Clear the amount input after adding
   };
-  
+
   const removePurpose = (index: number) => {
-    if (purposes.length > 1) {
-      const updatedPurposes = [...purposes];
-      updatedPurposes.splice(index, 1);
-      setPurposes(updatedPurposes);
-    }
+    const newPurposes = [...purposes];
+    newPurposes.splice(index, 1);
+    setPurposes(newPurposes);
   };
-  
-  const validatePurposes = () => {
-    let valid = true;
-    purposes.forEach((purpose, index) => {
-      if (!purpose.type) {
-        toast.error(`Please select a purpose type for entry #${index + 1}`);
-        valid = false;
-      }
-      
-      if (!purpose.amount || purpose.amount <= 0) {
-        toast.error(`Please enter a valid amount for ${purpose.type || `entry #${index + 1}`}`);
-        valid = false;
-      }
-      
-      if (!purpose.images || purpose.images.length === 0) {
-        toast.error(`Please add at least one photo for ${purpose.type || `entry #${index + 1}`}`);
-        valid = false;
-      }
-    });
-    
-    return valid;
+
+  const handleImageCapture = (index: number, photo: PhotoWithMetadata) => {
+    const newPurposes = [...purposes];
+    newPurposes[index].images = [...newPurposes[index].images, photo];
+    setPurposes(newPurposes);
   };
-  
-  const handleSubmit = () => {
-    if (!selectedProject) {
-      toast.error("Please select a project");
-      return;
-    }
-    
-    if (!validatePurposes()) {
-      return;
-    }
-    
+
+  const removeImage = (purposeIndex: number, imageIndex: number) => {
+    const newPurposes = [...purposes];
+    newPurposes[purposeIndex].images.splice(imageIndex, 1);
+    setPurposes(newPurposes);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
-    
-    try {
-      // Find the most recent progress update to link to this payment request
-      const paymentData = {
-        projectId: selectedProject,
-        date: new Date().toISOString(),
-        totalAmount,
-        purposes: purposes as PaymentPurpose[],
-        status: 'pending' as const,
-        progressUpdateId: '', // This would typically come from the most recent progress update
-      };
-      
-      createPaymentRequest(paymentData);
-      
-      toast.success("Payment request submitted successfully");
-      
-      // Redirect after short delay
-      setTimeout(() => {
-        navigate('/leader/view-payment');
-      }, 1500);
-      
-    } catch (error) {
-      console.error("Error submitting payment request:", error);
-      toast.error("Failed to submit payment request. Please try again.");
-    } finally {
+
+    if (!selectedProject) {
+      toast({
+        title: "Error",
+        description: "Please select a project.",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
+      return;
     }
+
+    if (purposes.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one payment purpose.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const project = getProjectById(selectedProject);
+    if (!project) {
+      toast({
+        title: "Error",
+        description: "Selected project not found.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const newPaymentRequest: PaymentRequest = {
+      id: `payment-${Date.now()}`,
+      projectId: selectedProject,
+      date: date,
+      purposes: purposes,
+      status: "pending",
+      totalAmount: totalAmount,
+    };
+
+    createPaymentRequest(newPaymentRequest);
+
+    toast({
+      title: "Success",
+      description: "Payment request submitted successfully!",
+    });
+
+    navigate('/leader/view-payment');
+    setIsSubmitting(false);
   };
-  
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-6">Request Payment</h1>
-      <p className="text-muted-foreground mb-8">
-        Submit payment requests for project expenses.
-      </p>
-      
-      <div className="mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Selection</CardTitle>
-            <CardDescription>
-              Select the project for which you're requesting payment
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select
-              value={selectedProject}
-              onValueChange={setSelectedProject}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <h2 className="text-2xl font-bold mb-4">Payment Details</h2>
-      <p className="text-muted-foreground mb-4">
-        Enter the different purposes and amounts for your payment request
-      </p>
-      
-      {purposes.map((purpose, index) => (
-        <Card key={index} className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between">
+    <div className="container mx-auto py-8">
+      <Card className="w-full max-w-3xl mx-auto shadow-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Request Payment</CardTitle>
+          <CardDescription>Submit a payment request for your project</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <CardTitle>Purpose {index + 1}</CardTitle>
-              <CardDescription>
-                Select category, enter amount, and upload supporting images
-              </CardDescription>
+              <Label htmlFor="project">Project</Label>
+              <Select value={selectedProject} onValueChange={setSelectedProject}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            {purposes.length > 1 && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => removePurpose(index)}
-                className="h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor={`purpose-type-${index}`}>Purpose Type</Label>
-                <Select
-                  value={purpose.type}
-                  onValueChange={(value) => handlePurposeTypeChange(index, value)}
-                >
-                  <SelectTrigger id={`purpose-type-${index}`}>
+            <div>
+              <Label htmlFor="date">Date</Label>
+              <Input
+                type="date"
+                id="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="paymentType">Payment Purpose</Label>
+              <div className="flex space-x-2">
+                <Select value={paymentType} onValueChange={setPaymentType}>
+                  <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select purpose" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PAYMENT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type} className="capitalize">
-                        {type}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="food">Food</SelectItem>
+                    <SelectItem value="fuel">Fuel</SelectItem>
+                    <SelectItem value="labour">Labour</SelectItem>
+                    <SelectItem value="vehicle">Vehicle</SelectItem>
+                    <SelectItem value="water">Water</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor={`purpose-amount-${index}`}>Amount (₹)</Label>
                 <Input
-                  id={`purpose-amount-${index}`}
                   type="number"
-                  placeholder="Enter amount"
-                  min="1"
-                  value={purpose.amount || ''}
-                  onChange={(e) => handlePurposeAmountChange(index, e.target.value)}
+                  placeholder="Amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
                 />
+                <Button type="button" onClick={addPurpose}><Plus className="mr-2" />Add</Button>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label>Supporting Images</Label>
-              <PhotoPreview onCapture={(photo) => handleAddPhoto(index, photo)} />
-              
-              {(purpose.images?.length || 0) > 0 && (
-                <div className="mt-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {purpose.images?.map((image, imgIndex) => (
-                      <div key={imgIndex} className="relative">
-                        <img
-                          src={image.dataUrl}
-                          alt={`Support image ${imgIndex + 1}`}
-                          className="w-full h-24 object-cover rounded"
-                        />
-                        <button
-                          onClick={() => handleRemovePhoto(index, imgIndex)}
-                          className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                          type="button"
-                        >
-                          ×
-                        </button>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
-                          {new Date(image.timestamp).toLocaleTimeString()}
-                        </div>
+            <div>
+              <Label>Payment Purposes</Label>
+              {purposes.map((purpose, index) => (
+                <Card key={index} className="mb-4">
+                  <CardHeader>
+                    <CardTitle>{purpose.type}</CardTitle>
+                    <CardDescription>Amount: {purpose.amount}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <Label>Photos</Label>
+                      <div className="flex space-x-2">
+                        {purpose.images.map((photo, photoIndex) => (
+                          <div key={photoIndex} className="relative w-32">
+                            <img src={photo.dataUrl} alt="Payment" className="w-full aspect-square object-cover rounded-md" />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-0 right-0 rounded-sm opacity-0 group-hover:opacity-100 transition"
+                              onClick={() => removeImage(index, photoIndex)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        {purpose.images.length < 3 && (
+                          <div className="w-32">
+                            <PhotoPreview
+                              buttonText="Add Photo"
+                              onCapture={(photo) => handleImageCapture(index, photo)}
+                            />
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => removePurpose(index)}>
+                      Remove
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      ))}
-      
-      <div className="flex justify-center mb-8">
-        <Button onClick={addPurpose} variant="outline" className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Another Purpose
-        </Button>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between font-medium">
-              <span>Total Amount:</span>
-              <span>₹ {totalAmount.toFixed(2)}</span>
+            <div>
+              <Label>Total Amount: ₹{totalAmount}</Label>
             </div>
-            
-            <div className="border-t pt-4">
-              <ul className="space-y-2">
-                {purposes.map((purpose, index) => (
-                  <li key={index} className="flex items-center justify-between">
-                    <span className="text-sm capitalize">{purpose.type || `Purpose ${index + 1}`}</span>
-                    <span className="text-sm">₹ {(purpose.amount || 0).toFixed(2)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+            <CardFooter>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? "Submitting..." : "Submit Request"}
+              </Button>
+            </CardFooter>
+          </form>
         </CardContent>
-        <CardFooter>
-          <Button 
-            onClick={handleSubmit} 
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <span className="animate-spin">⏳</span> Submitting...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Check className="h-4 w-4" /> Submit Payment Request
-              </span>
-            )}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );

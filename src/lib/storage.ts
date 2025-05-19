@@ -1,4 +1,3 @@
-
 import { 
   User, Project, Vehicle, Driver, ProgressUpdate, 
   PaymentRequest, CorrectionRequest, Location, UserRole, 
@@ -506,3 +505,33 @@ export function getLeaderProgressStats(): LeaderProgressStats[] {
     };
   });
 }
+
+export const registerUser = (name: string, email: string, password: string, role: UserRole): { success: boolean, message?: string } => {
+  // Check if email exists
+  const existingUser = getUserByEmail(email);
+  if (existingUser) {
+    return { 
+      success: false, 
+      message: "Email already registered. Please use a different email or login." 
+    };
+  }
+
+  // Generate a new ID
+  const users = getAllUsers();
+  const id = `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  
+  // Create the new user
+  const newUser: User = {
+    id,
+    name,
+    email,
+    password,
+    role
+  };
+  
+  // Add to localStorage
+  const updatedUsers = [...users, newUser];
+  localStorage.setItem('saibalaji_users', JSON.stringify(updatedUsers));
+  
+  return { success: true };
+};
