@@ -1,118 +1,57 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/auth-context';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/sonner';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { 
-  getAllVehicles, 
-  createVehicle,
-  updateVehicle,
-  deleteVehicle
-} from '@/lib/storage';
+import { getAllVehicles, createVehicle, updateVehicle, deleteVehicle } from '@/lib/storage';
 import { Vehicle } from '@/lib/types';
 
 const AdminVehicles = () => {
-  const { user } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [showAddDialog, setShowAddDialog] = useState<boolean>(false);
-  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   
-  // Form states
-  const [newVehicleData, setNewVehicleData] = useState({
-    model: '',
-    registrationNumber: '',
-    pollutionCertExpiry: '',
-    fitnessCertExpiry: '',
-    additionalDetails: ''
-  });
+  const [model, setModel] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [pollutionCertExpiry, setPollutionCertExpiry] = useState('');
+  const [fitnessCertExpiry, setFitnessCertExpiry] = useState('');
+  const [additionalDetails, setAdditionalDetails] = useState('');
   
-  const [editVehicleData, setEditVehicleData] = useState({
-    model: '',
-    registrationNumber: '',
-    pollutionCertExpiry: '',
-    fitnessCertExpiry: '',
-    additionalDetails: ''
-  });
-  
+  // Load vehicles on mount
   useEffect(() => {
-    // Fetch all vehicles
-    const allVehicles = getAllVehicles();
-    setVehicles(allVehicles);
-    setFilteredVehicles(allVehicles);
+    loadVehicles();
   }, []);
   
-  // Filter vehicles based on search term
-  useEffect(() => {
-    if (!searchTerm) {
-      setFilteredVehicles(vehicles);
-      return;
-    }
-    
-    const term = searchTerm.toLowerCase();
-    const filtered = vehicles.filter(
-      vehicle => 
-        vehicle.model.toLowerCase().includes(term) || 
-        vehicle.registrationNumber.toLowerCase().includes(term)
-    );
-    
-    setFilteredVehicles(filtered);
-  }, [searchTerm, vehicles]);
+  const loadVehicles = () => {
+    const allVehicles = getAllVehicles();
+    setVehicles(allVehicles);
+  };
   
   const handleAddVehicle = () => {
-    // Validate form
-    if (!newVehicleData.model || !newVehicleData.registrationNumber) {
-      toast.error("Vehicle model and registration number are required");
+    if (!model || !registrationNumber || !pollutionCertExpiry || !fitnessCertExpiry) {
+      toast.error("Please fill all required fields");
       return;
     }
     
     try {
-      // Check if registration number already exists
-      if (vehicles.some(v => v.registrationNumber === newVehicleData.registrationNumber)) {
-        toast.error("A vehicle with this registration number already exists");
-        return;
-      }
-      
-      // Create new vehicle
-      const createdVehicle = createVehicle({
-        model: newVehicleData.model,
-        registrationNumber: newVehicleData.registrationNumber,
-        pollutionCertExpiry: newVehicleData.pollutionCertExpiry,
-        fitnessCertExpiry: newVehicleData.fitnessCertExpiry,
-        additionalDetails: newVehicleData.additionalDetails
+      const newVehicle = createVehicle({
+        model,
+        registrationNumber,
+        pollutionCertExpiry,
+        fitnessCertExpiry,
+        additionalDetails
       });
       
-      if (createdVehicle) {
-        // Update state
-        setVehicles(prevVehicles => [...prevVehicles, createdVehicle]);
-        
-        // Close dialog and reset form
-        setShowAddDialog(false);
-        setNewVehicleData({
-          model: '',
-          registrationNumber: '',
-          pollutionCertExpiry: '',
-          fitnessCertExpiry: '',
-          additionalDetails: ''
-        });
-        
+      if (newVehicle) {
         toast.success("Vehicle added successfully");
-      } else {
-        toast.error("Failed to add vehicle");
+        setShowAddDialog(false);
+        resetForm();
+        loadVehicles();
       }
     } catch (error) {
       console.error("Error adding vehicle:", error);
@@ -121,46 +60,25 @@ const AdminVehicles = () => {
   };
   
   const handleEditVehicle = () => {
-    if (!selectedVehicle) return;
-    
-    // Validate form
-    if (!editVehicleData.model || !editVehicleData.registrationNumber) {
-      toast.error("Vehicle model and registration number are required");
+    if (!selectedVehicle || !model || !registrationNumber || !pollutionCertExpiry || !fitnessCertExpiry) {
+      toast.error("Please fill all required fields");
       return;
     }
     
     try {
-      // Check if registration number already exists for another vehicle
-      if (vehicles.some(v => 
-        v.registrationNumber === editVehicleData.registrationNumber && 
-        v.id !== selectedVehicle.id
-      )) {
-        toast.error("Another vehicle with this registration number already exists");
-        return;
-      }
-      
-      // Update vehicle
-      const updatedVehicle = updateVehicle({
+      updateVehicle({
         ...selectedVehicle,
-        model: editVehicleData.model,
-        registrationNumber: editVehicleData.registrationNumber,
-        pollutionCertExpiry: editVehicleData.pollutionCertExpiry,
-        fitnessCertExpiry: editVehicleData.fitnessCertExpiry,
-        additionalDetails: editVehicleData.additionalDetails
+        model,
+        registrationNumber,
+        pollutionCertExpiry,
+        fitnessCertExpiry,
+        additionalDetails
       });
       
-      if (updatedVehicle) {
-        // Update state
-        setVehicles(prevVehicles => prevVehicles.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
-        
-        // Close dialog
-        setShowEditDialog(false);
-        setSelectedVehicle(null);
-        
-        toast.success("Vehicle updated successfully");
-      } else {
-        toast.error("Failed to update vehicle");
-      }
+      toast.success("Vehicle updated successfully");
+      setShowEditDialog(false);
+      resetForm();
+      loadVehicles();
     } catch (error) {
       console.error("Error updating vehicle:", error);
       toast.error("Failed to update vehicle");
@@ -168,20 +86,17 @@ const AdminVehicles = () => {
   };
   
   const handleDeleteVehicle = () => {
-    if (!selectedVehicle) return;
+    if (!selectedVehicle) {
+      toast.error("No vehicle selected");
+      return;
+    }
     
     try {
-      // Delete vehicle
       deleteVehicle(selectedVehicle.id);
-      
-      // Update state
-      setVehicles(prevVehicles => prevVehicles.filter(v => v.id !== selectedVehicle.id));
-      
-      // Close dialog
+      toast.success("Vehicle deleted successfully");
       setShowDeleteDialog(false);
       setSelectedVehicle(null);
-      
-      toast.success("Vehicle deleted successfully");
+      loadVehicles();
     } catch (error) {
       console.error("Error deleting vehicle:", error);
       toast.error("Failed to delete vehicle");
@@ -190,13 +105,11 @@ const AdminVehicles = () => {
   
   const openEditDialog = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
-    setEditVehicleData({
-      model: vehicle.model,
-      registrationNumber: vehicle.registrationNumber,
-      pollutionCertExpiry: vehicle.pollutionCertExpiry,
-      fitnessCertExpiry: vehicle.fitnessCertExpiry,
-      additionalDetails: vehicle.additionalDetails
-    });
+    setModel(vehicle.model);
+    setRegistrationNumber(vehicle.registrationNumber);
+    setPollutionCertExpiry(vehicle.pollutionCertExpiry);
+    setFitnessCertExpiry(vehicle.fitnessCertExpiry);
+    setAdditionalDetails(vehicle.additionalDetails);
     setShowEditDialog(true);
   };
   
@@ -205,212 +118,99 @@ const AdminVehicles = () => {
     setShowDeleteDialog(true);
   };
   
-  // Function to format date for display
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not specified';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+  const resetForm = () => {
+    setModel('');
+    setRegistrationNumber('');
+    setPollutionCertExpiry('');
+    setFitnessCertExpiry('');
+    setAdditionalDetails('');
+    setSelectedVehicle(null);
   };
-  
-  // Function to determine if a certificate is expired or expiring soon
-  const getCertificateStatus = (expiryDateString: string) => {
-    if (!expiryDateString) return { status: 'missing', label: 'Missing' };
-    
-    const today = new Date();
-    const expiryDate = new Date(expiryDateString);
-    
-    // Calculate difference in days
-    const diffTime = expiryDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) {
-      return { status: 'expired', label: 'Expired' };
-    } else if (diffDays <= 30) {
-      return { status: 'expiring', label: `Expiring in ${diffDays} days` };
-    } else {
-      return { status: 'valid', label: 'Valid' };
-    }
-  };
-  
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-6">Vehicle Management</h1>
+      <h1 className="text-4xl font-bold mb-6">Manage Vehicles</h1>
       <p className="text-muted-foreground mb-8">
-        Manage vehicles and track certificate expiry dates.
+        Add, edit, and manage vehicles in the system.
       </p>
       
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-        <div className="w-full md:w-60">
-          <Label htmlFor="search-vehicles" className="mb-1 block">Search Vehicles</Label>
-          <Input
-            id="search-vehicles"
-            placeholder="Search by model or reg. no."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-enhanced"
-          />
-        </div>
-        
-        <div className="mt-4 md:mt-auto">
-          <Button onClick={() => setShowAddDialog(true)} className="btn-gradient">
-            Add New Vehicle
-          </Button>
-        </div>
-      </div>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredVehicles.map((vehicle) => {
-          const pollutionStatus = getCertificateStatus(vehicle.pollutionCertExpiry);
-          const fitnessStatus = getCertificateStatus(vehicle.fitnessCertExpiry);
-          
-          return (
-            <Card key={vehicle.id} className="card-glow overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
-                <CardTitle>{vehicle.model}</CardTitle>
-                <CardDescription>
-                  Reg. No: {vehicle.registrationNumber}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <p className="text-sm font-medium">Pollution Certificate:</p>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      pollutionStatus.status === 'valid' ? 'bg-green-100 text-green-800' :
-                      pollutionStatus.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {pollutionStatus.label}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(vehicle.pollutionCertExpiry)}
-                  </p>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <p className="text-sm font-medium">Fitness Certificate:</p>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      fitnessStatus.status === 'valid' ? 'bg-green-100 text-green-800' :
-                      fitnessStatus.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {fitnessStatus.label}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(vehicle.fitnessCertExpiry)}
-                  </p>
-                </div>
-                
-                {vehicle.additionalDetails && (
-                  <div>
-                    <p className="text-sm font-medium">Additional Details:</p>
-                    <p className="text-sm text-muted-foreground">{vehicle.additionalDetails}</p>
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex justify-between gap-2 bg-muted/20">
-                <Button 
-                  variant="outline" 
-                  className="flex-1 hover:bg-primary/10"
-                  onClick={() => openEditDialog(vehicle)}
-                >
-                  Edit
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  className="flex-1 hover:bg-destructive/90"
-                  onClick={() => openDeleteDialog(vehicle)}
-                >
-                  Delete
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-        })}
-        
-        {filteredVehicles.length === 0 && (
-          <Card className="col-span-full">
-            <CardHeader>
-              <CardTitle>No Vehicles Found</CardTitle>
-              <CardDescription>
-                No vehicles match your search criteria.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Vehicles</CardTitle>
+          <CardDescription>
+            Manage vehicle details
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            <Button onClick={() => setShowAddDialog(true)}>Add Vehicle</Button>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pollution Cert Expiry</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fitness Cert Expiry</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {vehicles.map(vehicle => (
+                    <tr key={vehicle.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{vehicle.model}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.registrationNumber}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(vehicle.pollutionCertExpiry).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(vehicle.fitnessCertExpiry).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button variant="secondary" size="sm" onClick={() => openEditDialog(vehicle)}>Edit</Button>
+                        <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(vehicle)}>Delete</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Add Vehicle Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Vehicle</DialogTitle>
+            <DialogTitle>Add Vehicle</DialogTitle>
             <DialogDescription>
-              Enter the details of the new vehicle
+              Add a new vehicle to the system.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-model">Vehicle Model *</Label>
-              <Input
-                id="new-model"
-                placeholder="e.g. Tata ACE"
-                value={newVehicleData.model}
-                onChange={(e) => setNewVehicleData({...newVehicleData, model: e.target.value})}
-              />
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="model" className="text-right">Model</Label>
+              <Input id="model" value={model} onChange={(e) => setModel(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-reg-no">Registration Number *</Label>
-              <Input
-                id="new-reg-no"
-                placeholder="e.g. MH01AB1234"
-                value={newVehicleData.registrationNumber}
-                onChange={(e) => setNewVehicleData({...newVehicleData, registrationNumber: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="registrationNumber" className="text-right">Registration Number</Label>
+              <Input id="registrationNumber" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-pollution">Pollution Certificate</Label>
-              <Input
-                id="new-pollution"
-                placeholder="Certificate number or validity date"
-                value={newVehicleData.pollutionCertExpiry}
-                onChange={(e) => setNewVehicleData({...newVehicleData, pollutionCertExpiry: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="pollutionCertExpiry" className="text-right">Pollution Cert Expiry</Label>
+              <Input type="date" id="pollutionCertExpiry" value={pollutionCertExpiry} onChange={(e) => setPollutionCertExpiry(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-fitness">Fitness Certificate</Label>
-              <Input
-                id="new-fitness"
-                placeholder="Certificate number or validity date"
-                value={newVehicleData.fitnessCertExpiry}
-                onChange={(e) => setNewVehicleData({...newVehicleData, fitnessCertExpiry: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="fitnessCertExpiry" className="text-right">Fitness Cert Expiry</Label>
+              <Input type="date" id="fitnessCertExpiry" value={fitnessCertExpiry} onChange={(e) => setFitnessCertExpiry(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-details">Additional Details</Label>
-              <Input
-                id="new-details"
-                placeholder="Any other information"
-                value={newVehicleData.additionalDetails}
-                onChange={(e) => setNewVehicleData({...newVehicleData, additionalDetails: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="additionalDetails" className="text-right">Additional Details</Label>
+              <Textarea id="additionalDetails" value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} className="col-span-3" />
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button variant="secondary" onClick={() => setShowAddDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleAddVehicle}>
@@ -426,68 +226,39 @@ const AdminVehicles = () => {
           <DialogHeader>
             <DialogTitle>Edit Vehicle</DialogTitle>
             <DialogDescription>
-              Update vehicle details
+              Edit the details of the selected vehicle.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-model">Vehicle Model *</Label>
-              <Input
-                id="edit-model"
-                placeholder="e.g. Tata ACE"
-                value={editVehicleData.model}
-                onChange={(e) => setEditVehicleData({...editVehicleData, model: e.target.value})}
-              />
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="model" className="text-right">Model</Label>
+              <Input id="model" value={model} onChange={(e) => setModel(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-reg-no">Registration Number *</Label>
-              <Input
-                id="edit-reg-no"
-                placeholder="e.g. MH01AB1234"
-                value={editVehicleData.registrationNumber}
-                onChange={(e) => setEditVehicleData({...editVehicleData, registrationNumber: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="registrationNumber" className="text-right">Registration Number</Label>
+              <Input id="registrationNumber" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-pollution">Pollution Certificate</Label>
-              <Input
-                id="edit-pollution"
-                placeholder="Certificate number or validity date"
-                value={editVehicleData.pollutionCertExpiry}
-                onChange={(e) => setEditVehicleData({...editVehicleData, pollutionCertExpiry: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="pollutionCertExpiry" className="text-right">Pollution Cert Expiry</Label>
+              <Input type="date" id="pollutionCertExpiry" value={pollutionCertExpiry} onChange={(e) => setPollutionCertExpiry(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-fitness">Fitness Certificate</Label>
-              <Input
-                id="edit-fitness"
-                placeholder="Certificate number or validity date"
-                value={editVehicleData.fitnessCertExpiry}
-                onChange={(e) => setEditVehicleData({...editVehicleData, fitnessCertExpiry: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="fitnessCertExpiry" className="text-right">Fitness Cert Expiry</Label>
+              <Input type="date" id="fitnessCertExpiry" value={fitnessCertExpiry} onChange={(e) => setFitnessCertExpiry(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-details">Additional Details</Label>
-              <Input
-                id="edit-details"
-                placeholder="Any other information"
-                value={editVehicleData.additionalDetails}
-                onChange={(e) => setEditVehicleData({...editVehicleData, additionalDetails: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="additionalDetails" className="text-right">Additional Details</Label>
+              <Textarea id="additionalDetails" value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} className="col-span-3" />
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <Button variant="secondary" onClick={() => setShowEditDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleEditVehicle}>
-              Save Changes
+              Update Vehicle
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -503,23 +274,8 @@ const AdminVehicles = () => {
             </DialogDescription>
           </DialogHeader>
           
-          {selectedVehicle && (
-            <div className="space-y-4">
-              <div className="p-4 border rounded-md">
-                <div><strong>Model:</strong> {selectedVehicle.model}</div>
-                <div><strong>Registration:</strong> {selectedVehicle.registrationNumber}</div>
-                {selectedVehicle.pollutionCertExpiry && (
-                  <div><strong>Pollution Certificate:</strong> {formatDate(selectedVehicle.pollutionCertExpiry)}</div>
-                )}
-                {selectedVehicle.fitnessCertExpiry && (
-                  <div><strong>Fitness Certificate:</strong> {formatDate(selectedVehicle.fitnessCertExpiry)}</div>
-                )}
-              </div>
-            </div>
-          )}
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+            <Button variant="secondary" onClick={() => setShowDeleteDialog(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteVehicle}>

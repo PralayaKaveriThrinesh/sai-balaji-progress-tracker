@@ -1,183 +1,81 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/auth-context';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
-import { 
-  getAllUsers, 
-  createUser,
-  updateUser,
-  deleteUser
-} from '@/lib/storage';
-import { User } from '@/lib/types';
+import { getAllUsers, createUser, updateUser, deleteUser, getUsersByRole } from '@/lib/storage';
+import { User, UserRole } from '@/lib/types';
 
 const AdminCredentials = () => {
-  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [showAddDialog, setShowAddDialog] = useState<boolean>(false);
-  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
-  // Form states
-  const [newUserData, setNewUserData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'leader'
-  });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('leader');
   
-  const [editUserData, setEditUserData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: ''
-  });
-  
+  // Load users on mount
   useEffect(() => {
-    // Fetch all users
-    const allUsers = getAllUsers();
-    setUsers(allUsers);
-    setFilteredUsers(allUsers);
+    loadUsers();
   }, []);
   
-  // Filter users based on role and search term
-  useEffect(() => {
-    let filtered = users;
-    
-    if (selectedRole !== 'all') {
-      filtered = filtered.filter(user => user.role === selectedRole);
-    }
-    
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        user => user.name.toLowerCase().includes(term) || 
-               user.email.toLowerCase().includes(term)
-      );
-    }
-    
-    setFilteredUsers(filtered);
-  }, [selectedRole, searchTerm, users]);
+  const loadUsers = () => {
+    const allUsers = getAllUsers();
+    setUsers(allUsers);
+  };
   
   const handleAddUser = () => {
-    // Validate form
-    if (!newUserData.name || !newUserData.email || !newUserData.password || !newUserData.role) {
-      toast.error("All fields are required");
-      return;
-    }
-    
-    if (!newUserData.email.includes('@')) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-    
-    if (newUserData.password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+    if (!name || !email || !password || !role) {
+      toast.error("Please fill all fields");
       return;
     }
     
     try {
-      // Check if email already exists
-      if (users.some(u => u.email === newUserData.email)) {
-        toast.error("A user with this email already exists");
-        return;
-      }
-      
-      // Create new user
-      const createdUser = createUser({
-        name: newUserData.name,
-        email: newUserData.email,
-        password: newUserData.password,
-        role: newUserData.role as 'admin' | 'leader' | 'checker' | 'owner'
+      const newUser = createUser({
+        name,
+        email,
+        password,
+        role
       });
       
-      if (createdUser) {
-        // Update state - only add if user was created successfully
-        setUsers(prevUsers => [...prevUsers, createdUser]);
-        
-        // Close dialog and reset form
-        setShowAddDialog(false);
-        setNewUserData({
-          name: '',
-          email: '',
-          password: '',
-          role: 'leader'
-        });
-        
+      if (newUser) {
         toast.success("User created successfully");
-      } else {
-        toast.error("Failed to create user");
+        setShowAddDialog(false);
+        resetForm();
+        loadUsers();
       }
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error adding user:", error);
       toast.error("Failed to create user");
     }
   };
   
   const handleEditUser = () => {
-    if (!selectedUser) return;
-    
-    // Validate form
-    if (!editUserData.name || !editUserData.email || !editUserData.role) {
-      toast.error("Name, email and role are required");
-      return;
-    }
-    
-    if (!editUserData.email.includes('@')) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-    
-    if (editUserData.password && editUserData.password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+    if (!selectedUser || !name || !email || !role) {
+      toast.error("Please fill all fields");
       return;
     }
     
     try {
-      // Check if email already exists for another user
-      if (users.some(u => u.email === editUserData.email && u.id !== selectedUser.id)) {
-        toast.error("Another user with this email already exists");
-        return;
-      }
-      
-      // Update user
-      const updatedUser = updateUser({
+      updateUser({
         ...selectedUser,
-        name: editUserData.name,
-        email: editUserData.email,
-        role: editUserData.role as 'admin' | 'leader' | 'checker' | 'owner',
-        password: editUserData.password || selectedUser.password // Only update if provided
+        name,
+        email,
+        password: password || selectedUser.password,
+        role
       });
       
-      if (updatedUser) {
-        // Update state - only update if user was updated successfully
-        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        
-        // Close dialog
-        setShowEditDialog(false);
-        setSelectedUser(null);
-        
-        toast.success("User updated successfully");
-      } else {
-        toast.error("Failed to update user");
-      }
+      toast.success("User updated successfully");
+      setShowEditDialog(false);
+      resetForm();
+      loadUsers();
     } catch (error) {
       console.error("Error updating user:", error);
       toast.error("Failed to update user");
@@ -185,20 +83,17 @@ const AdminCredentials = () => {
   };
   
   const handleDeleteUser = () => {
-    if (!selectedUser) return;
+    if (!selectedUser) {
+      toast.error("No user selected");
+      return;
+    }
     
     try {
-      // Delete user
       deleteUser(selectedUser.id);
-      
-      // Update state
-      setUsers(prevUsers => prevUsers.filter(u => u.id !== selectedUser.id));
-      
-      // Close dialog
+      toast.success("User deleted successfully");
       setShowDeleteDialog(false);
       setSelectedUser(null);
-      
-      toast.success("User deleted successfully");
+      loadUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
@@ -207,12 +102,10 @@ const AdminCredentials = () => {
   
   const openEditDialog = (user: User) => {
     setSelectedUser(user);
-    setEditUserData({
-      name: user.name,
-      email: user.email,
-      password: '', // Don't show existing password
-      role: user.role
-    });
+    setName(user.name);
+    setEmail(user.email);
+    setPassword('');
+    setRole(user.role);
     setShowEditDialog(true);
   };
   
@@ -221,109 +114,111 @@ const AdminCredentials = () => {
     setShowDeleteDialog(true);
   };
   
-  const getRoleLabel = (role: string) => {
-    const roleMap: Record<string, string> = {
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setRole('leader');
+    setSelectedUser(null);
+  };
+  
+  const getUserCount = (role: UserRole): number => {
+    return users.filter(user => user.role === role).length;
+  };
+  
+  const getRoleLabel = (role: UserRole): string => {
+    const labels: Record<UserRole, string> = {
       'admin': 'Admin',
-      'leader': 'Leader',
-      'checker': 'Checker',
+      'leader': 'Team Leader',
+      'checker': 'Quality Checker',
       'owner': 'Owner'
     };
     
-    return roleMap[role] || role;
+    return labels[role] || role;
   };
-  
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-6">User Credentials</h1>
+      <h1 className="text-4xl font-bold mb-6">Manage User Credentials</h1>
       <p className="text-muted-foreground mb-8">
-        Manage user accounts and access permissions.
+        Add, edit, and manage user accounts and their roles within the system.
       </p>
       
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-          <div className="w-full md:w-60">
-            <Label htmlFor="role-filter" className="mb-1 block">Filter by Role</Label>
-            <Select
-              value={selectedRole}
-              onValueChange={setSelectedRole}
-            >
-              <SelectTrigger id="role-filter">
-                <SelectValue placeholder="All Roles" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="leader">Leader</SelectItem>
-                <SelectItem value="checker">Checker</SelectItem>
-                <SelectItem value="owner">Owner</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="w-full md:w-60">
-            <Label htmlFor="search-users" className="mb-1 block">Search Users</Label>
-            <Input
-              id="search-users"
-              placeholder="Search by name or email"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>User Accounts</CardTitle>
+              <CardDescription>
+                Manage existing user accounts and their roles
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Admin Users:</p>
+                  <p className="text-2xl font-bold">{getUserCount('admin')}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Team Leaders:</p>
+                  <p className="text-2xl font-bold">{getUserCount('leader')}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Quality Checkers:</p>
+                  <p className="text-2xl font-bold">{getUserCount('checker')}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Owners:</p>
+                  <p className="text-2xl font-bold">{getUserCount('owner')}</p>
+                </div>
+              </div>
+              
+              <Button onClick={() => setShowAddDialog(true)}>Add User</Button>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 bg-gray-50"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map(user => (
+                      <tr key={user.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{user.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{user.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{getRoleLabel(user.role)}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(user)}>
+                            Edit
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(user)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        <div className="mt-4 md:mt-auto">
-          <Button onClick={() => setShowAddDialog(true)}>
-            Add New User
-          </Button>
-        </div>
-      </div>
-      
-      <div className="border rounded-md">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="text-left p-4">Name</th>
-              <th className="text-left p-4">Email</th>
-              <th className="text-left p-4">Role</th>
-              <th className="text-right p-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="border-b hover:bg-muted/20">
-                <td className="p-4">{user.name}</td>
-                <td className="p-4">{user.email}</td>
-                <td className="p-4 capitalize">{getRoleLabel(user.role)}</td>
-                <td className="p-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => openEditDialog(user)}
-                    >
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => openDeleteDialog(user)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            
-            {filteredUsers.length === 0 && (
-              <tr>
-                <td colSpan={4} className="p-8 text-center text-muted-foreground">
-                  No users found matching your criteria.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
       </div>
       
       {/* Add User Dialog */}
@@ -332,56 +227,41 @@ const AdminCredentials = () => {
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
             <DialogDescription>
-              Create a new user account with appropriate permissions
+              Create a new user account with the necessary details.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-name">Name</Label>
-              <Input
-                id="new-name"
-                placeholder="Full name"
-                value={newUserData.name}
-                onChange={(e) => setNewUserData({...newUserData, name: e.target.value})}
-              />
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-email">Email Address</Label>
-              <Input
-                id="new-email"
-                type="email"
-                placeholder="Email"
-                value={newUserData.email}
-                onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
+              <Input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-password">Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                placeholder="Password"
-                value={newUserData.password}
-                onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                Password
+              </Label>
+              <Input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-role">Role</Label>
-              <Select
-                value={newUserData.role}
-                onValueChange={(value) => setNewUserData({...newUserData, role: value})}
-              >
-                <SelectTrigger id="new-role">
-                  <SelectValue placeholder="Select role" />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="role" className="text-right">
+                Role
+              </Label>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="role" className="col-span-3">
+                  <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="leader">Leader</SelectItem>
-                  <SelectItem value="checker">Checker</SelectItem>
+                  <SelectItem value="leader">Team Leader</SelectItem>
+                  <SelectItem value="checker">Quality Checker</SelectItem>
                   <SelectItem value="owner">Owner</SelectItem>
                 </SelectContent>
               </Select>
@@ -389,11 +269,11 @@ const AdminCredentials = () => {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button variant="secondary" onClick={() => setShowAddDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleAddUser}>
-              Create User
+              Add User
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -405,56 +285,41 @@ const AdminCredentials = () => {
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Update user details and permissions
+              Edit the details of the selected user account.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Name</Label>
-              <Input
-                id="edit-name"
-                placeholder="Full name"
-                value={editUserData.name}
-                onChange={(e) => setEditUserData({...editUserData, name: e.target.value})}
-              />
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email Address</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                placeholder="Email"
-                value={editUserData.email}
-                onChange={(e) => setEditUserData({...editUserData, email: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
+              <Input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-password">Password (leave blank to keep unchanged)</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                placeholder="New password"
-                value={editUserData.password}
-                onChange={(e) => setEditUserData({...editUserData, password: e.target.value})}
-              />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                Password
+              </Label>
+              <Input type="password" id="password" placeholder="Leave blank to keep current password" onChange={(e) => setPassword(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-role">Role</Label>
-              <Select
-                value={editUserData.role}
-                onValueChange={(value) => setEditUserData({...editUserData, role: value})}
-              >
-                <SelectTrigger id="edit-role">
-                  <SelectValue placeholder="Select role" />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="role" className="text-right">
+                Role
+              </Label>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="role" className="col-span-3">
+                  <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="leader">Leader</SelectItem>
-                  <SelectItem value="checker">Checker</SelectItem>
+                  <SelectItem value="leader">Team Leader</SelectItem>
+                  <SelectItem value="checker">Quality Checker</SelectItem>
                   <SelectItem value="owner">Owner</SelectItem>
                 </SelectContent>
               </Select>
@@ -462,11 +327,11 @@ const AdminCredentials = () => {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <Button variant="secondary" onClick={() => setShowEditDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleEditUser}>
-              Save Changes
+              Update User
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -478,22 +343,12 @@ const AdminCredentials = () => {
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
+              Are you sure you want to delete this user account? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           
-          {selectedUser && (
-            <div className="space-y-4">
-              <div className="p-4 border rounded-md">
-                <div><strong>Name:</strong> {selectedUser.name}</div>
-                <div><strong>Email:</strong> {selectedUser.email}</div>
-                <div><strong>Role:</strong> {getRoleLabel(selectedUser.role)}</div>
-              </div>
-            </div>
-          )}
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+            <Button variant="secondary" onClick={() => setShowDeleteDialog(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteUser}>

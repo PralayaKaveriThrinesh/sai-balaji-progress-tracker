@@ -13,7 +13,7 @@ export const FullscreenChartWrapper = ({ children, title }: FullscreenChartWrapp
   return (
     <FullscreenChart 
       title={title}
-      chart={children}
+      children={children}
     />
   );
 };

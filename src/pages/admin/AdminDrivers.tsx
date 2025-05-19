@@ -1,123 +1,61 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/auth-context';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/sonner';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { 
-  getAllDrivers, 
-  createDriver,
-  updateDriver,
-  deleteDriver
-} from '@/lib/storage';
+import { getAllDrivers, createDriver, updateDriver, deleteDriver } from '@/lib/storage';
 import { Driver } from '@/lib/types';
 
 const AdminDrivers = () => {
-  const { user } = useAuth();
   const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [showAddDialog, setShowAddDialog] = useState<boolean>(false);
-  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   
-  // Form states
-  const [newDriverData, setNewDriverData] = useState({
-    name: '',
-    licenseNumber: '',
-    licenseType: 'LMV',
-    experienceYears: '0',
-    contactNumber: '',
-    address: ''
-  });
+  const [name, setName] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [licenseType, setLicenseType] = useState('');
+  const [experience, setExperience] = useState<number>(0);
+  const [isExternal, setIsExternal] = useState(false);
+  const [contactNumber, setContactNumber] = useState('');
+  const [address, setAddress] = useState('');
   
-  const [editDriverData, setEditDriverData] = useState({
-    name: '',
-    licenseNumber: '',
-    licenseType: '',
-    experienceYears: '',
-    contactNumber: '',
-    address: ''
-  });
-  
+  // Load drivers on mount
   useEffect(() => {
-    // Fetch all drivers
-    const allDrivers = getAllDrivers();
-    setDrivers(allDrivers);
-    setFilteredDrivers(allDrivers);
+    loadDrivers();
   }, []);
   
-  // Filter drivers based on search term
-  useEffect(() => {
-    if (!searchTerm) {
-      setFilteredDrivers(drivers);
-      return;
-    }
-    
-    const term = searchTerm.toLowerCase();
-    const filtered = drivers.filter(
-      driver => 
-        driver.name.toLowerCase().includes(term) || 
-        driver.licenseNumber.toLowerCase().includes(term)
-    );
-    
-    setFilteredDrivers(filtered);
-  }, [searchTerm, drivers]);
+  const loadDrivers = () => {
+    const allDrivers = getAllDrivers();
+    setDrivers(allDrivers);
+  };
   
   const handleAddDriver = () => {
-    // Validate form
-    if (!newDriverData.name || !newDriverData.licenseNumber) {
-      toast.error("Driver name and license number are required");
+    if (!name || !licenseNumber || !licenseType || experience === undefined) {
+      toast.error("Please fill all required fields");
       return;
     }
     
     try {
-      // Check if license number already exists
-      if (drivers.some(d => d.licenseNumber === newDriverData.licenseNumber)) {
-        toast.error("A driver with this license number already exists");
-        return;
-      }
-      
-      // Create new driver
-      const createdDriver = createDriver({
-        name: newDriverData.name,
-        licenseNumber: newDriverData.licenseNumber,
-        licenseType: newDriverData.licenseType,
-        experience: parseInt(newDriverData.experienceYears), // Fixed property name
-        contactNumber: newDriverData.contactNumber,
-        address: newDriverData.address,
-        isExternal: false // Default value
+      const newDriver = createDriver({
+        name,
+        licenseNumber,
+        licenseType,
+        experience,
+        isExternal,
+        contactNumber: contactNumber || undefined,
+        address: address || undefined
       });
       
-      if (createdDriver) {
-        // Update state
-        setDrivers(prevDrivers => [...prevDrivers, createdDriver]);
-        
-        // Close dialog and reset form
-        setShowAddDialog(false);
-        setNewDriverData({
-          name: '',
-          licenseNumber: '',
-          licenseType: 'LMV',
-          experienceYears: '0',
-          contactNumber: '',
-          address: ''
-        });
-        
+      if (newDriver) {
         toast.success("Driver added successfully");
-      } else {
-        toast.error("Failed to add driver");
+        setShowAddDialog(false);
+        resetForm();
+        loadDrivers();
       }
     } catch (error) {
       console.error("Error adding driver:", error);
@@ -126,47 +64,27 @@ const AdminDrivers = () => {
   };
   
   const handleEditDriver = () => {
-    if (!selectedDriver) return;
-    
-    // Validate form
-    if (!editDriverData.name || !editDriverData.licenseNumber) {
-      toast.error("Driver name and license number are required");
+    if (!selectedDriver || !name || !licenseNumber || !licenseType || experience === undefined) {
+      toast.error("Please fill all required fields");
       return;
     }
     
     try {
-      // Check if license number already exists for another driver
-      if (drivers.some(d => 
-        d.licenseNumber === editDriverData.licenseNumber && 
-        d.id !== selectedDriver.id
-      )) {
-        toast.error("Another driver with this license number already exists");
-        return;
-      }
-      
-      // Update driver
-      const updatedDriver = updateDriver({
+      updateDriver({
         ...selectedDriver,
-        name: editDriverData.name,
-        licenseNumber: editDriverData.licenseNumber,
-        licenseType: editDriverData.licenseType,
-        experience: parseInt(editDriverData.experienceYears), // Fixed property name
-        contactNumber: editDriverData.contactNumber,
-        address: editDriverData.address
+        name,
+        licenseNumber,
+        licenseType,
+        experience,
+        isExternal,
+        contactNumber: contactNumber || undefined,
+        address: address || undefined
       });
       
-      if (updatedDriver) {
-        // Update state
-        setDrivers(prevDrivers => prevDrivers.map(d => d.id === updatedDriver.id ? updatedDriver : d));
-        
-        // Close dialog
-        setShowEditDialog(false);
-        setSelectedDriver(null);
-        
-        toast.success("Driver updated successfully");
-      } else {
-        toast.error("Failed to update driver");
-      }
+      toast.success("Driver updated successfully");
+      setShowEditDialog(false);
+      resetForm();
+      loadDrivers();
     } catch (error) {
       console.error("Error updating driver:", error);
       toast.error("Failed to update driver");
@@ -174,20 +92,17 @@ const AdminDrivers = () => {
   };
   
   const handleDeleteDriver = () => {
-    if (!selectedDriver) return;
+    if (!selectedDriver) {
+      toast.error("No driver selected");
+      return;
+    }
     
     try {
-      // Delete driver
       deleteDriver(selectedDriver.id);
-      
-      // Update state
-      setDrivers(prevDrivers => prevDrivers.filter(d => d.id !== selectedDriver.id));
-      
-      // Close dialog
+      toast.success("Driver deleted successfully");
       setShowDeleteDialog(false);
       setSelectedDriver(null);
-      
-      toast.success("Driver deleted successfully");
+      loadDrivers();
     } catch (error) {
       console.error("Error deleting driver:", error);
       toast.error("Failed to delete driver");
@@ -196,14 +111,13 @@ const AdminDrivers = () => {
   
   const openEditDialog = (driver: Driver) => {
     setSelectedDriver(driver);
-    setEditDriverData({
-      name: driver.name,
-      licenseNumber: driver.licenseNumber,
-      licenseType: driver.licenseType,
-      experienceYears: driver.experience.toString(), // Fixed property name
-      contactNumber: driver.contactNumber || '',
-      address: driver.address || ''
-    });
+    setName(driver.name);
+    setLicenseNumber(driver.licenseNumber);
+    setLicenseType(driver.licenseType);
+    setExperience(driver.experience);
+    setIsExternal(driver.isExternal);
+    setContactNumber(driver.contactNumber || '');
+    setAddress(driver.address || '');
     setShowEditDialog(true);
   };
   
@@ -212,92 +126,79 @@ const AdminDrivers = () => {
     setShowDeleteDialog(true);
   };
   
+  const resetForm = () => {
+    setName('');
+    setLicenseNumber('');
+    setLicenseType('');
+    setExperience(0);
+    setIsExternal(false);
+    setContactNumber('');
+    setAddress('');
+    setSelectedDriver(null);
+  };
+  
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-6">Driver Management</h1>
+      <h1 className="text-4xl font-bold mb-6">Manage Drivers</h1>
       <p className="text-muted-foreground mb-8">
-        Manage drivers, their licenses, and experience details.
+        Add, edit, and manage drivers for your projects.
       </p>
       
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-        <div className="w-full md:w-60">
-          <Label htmlFor="search-drivers" className="mb-1 block">Search Drivers</Label>
-          <Input
-            id="search-drivers"
-            placeholder="Search by name or license no."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="mt-4 md:mt-auto">
-          <Button onClick={() => setShowAddDialog(true)}>
-            Add New Driver
-          </Button>
-        </div>
-      </div>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredDrivers.map((driver) => (
-          <Card key={driver.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
-              <CardTitle>{driver.name}</CardTitle>
-              <CardDescription>
-                License: {driver.licenseNumber} ({driver.licenseType})
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="space-y-2">
-                <div>
-                  <p className="text-sm font-medium">Experience:</p>
-                  <p className="text-sm text-muted-foreground">{driver.experience} years</p>
-                </div>
-                
-                {driver.contactNumber && (
-                  <div>
-                    <p className="text-sm font-medium">Contact:</p>
-                    <p className="text-sm text-muted-foreground">{driver.contactNumber}</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Drivers</CardTitle>
+          <CardDescription>
+            View and manage existing drivers.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4">
+            {drivers.map(driver => (
+              <Card key={driver.id} className="border">
+                <CardContent className="grid gap-2">
+                  <div className="flex justify-between">
+                    <h3 className="text-lg font-semibold">{driver.name}</h3>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => openEditDialog(driver)}
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => openDeleteDialog(driver)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                )}
-                
-                {driver.address && (
-                  <div>
-                    <p className="text-sm font-medium">Address:</p>
-                    <p className="text-sm text-muted-foreground">{driver.address}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between gap-2 bg-muted/20">
-              <Button 
-                variant="outline" 
-                className="flex-1 hover:bg-primary/10"
-                onClick={() => openEditDialog(driver)}
-              >
-                Edit
-              </Button>
-              <Button 
-                variant="destructive" 
-                className="flex-1 hover:bg-destructive/90"
-                onClick={() => openDeleteDialog(driver)}
-              >
-                Delete
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-        
-        {filteredDrivers.length === 0 && (
-          <Card className="col-span-full">
-            <CardHeader>
-              <CardTitle>No Drivers Found</CardTitle>
-              <CardDescription>
-                No drivers match your search criteria.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
-      </div>
+                  
+                  <p className="text-sm text-muted-foreground">
+                    License: {driver.licenseNumber} ({driver.licenseType})
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Experience: {driver.experience} years
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Contact: {driver.contactNumber || 'N/A'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Address: {driver.address || 'N/A'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    External: {driver.isExternal ? 'Yes' : 'No'}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <Button onClick={() => setShowAddDialog(true)}>Add Driver</Button>
+        </CardContent>
+      </Card>
       
       {/* Add Driver Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -305,79 +206,99 @@ const AdminDrivers = () => {
           <DialogHeader>
             <DialogTitle>Add New Driver</DialogTitle>
             <DialogDescription>
-              Enter the details of the new driver
+              Enter the details for the new driver.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-name">Driver Name *</Label>
-              <Input
-                id="new-name"
-                placeholder="Full name"
-                value={newDriverData.name}
-                onChange={(e) => setNewDriverData({...newDriverData, name: e.target.value})}
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input 
+                type="text" 
+                id="name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="new-license">License Number *</Label>
-              <Input
-                id="new-license"
-                placeholder="e.g. DL-1234567890"
-                value={newDriverData.licenseNumber}
-                onChange={(e) => setNewDriverData({...newDriverData, licenseNumber: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="licenseNumber" className="text-right">
+                License Number
+              </Label>
+              <Input 
+                type="text" 
+                id="licenseNumber" 
+                value={licenseNumber} 
+                onChange={(e) => setLicenseNumber(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="new-license-type">License Type</Label>
-              <Select
-                value={newDriverData.licenseType}
-                onValueChange={(value) => setNewDriverData({...newDriverData, licenseType: value})}
-              >
-                <SelectTrigger id="new-license-type">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="LMV">LMV (Light Motor Vehicle)</SelectItem>
-                  <SelectItem value="HMV">HMV (Heavy Motor Vehicle)</SelectItem>
-                  <SelectItem value="MCWG">MCWG (Motorcycle with Gear)</SelectItem>
-                  <SelectItem value="MCWOG">MCWOG (Motorcycle without Gear)</SelectItem>
-                  <SelectItem value="HGMV">HGMV (Heavy Goods Motor Vehicle)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-experience">Experience (Years)</Label>
-              <Input
-                id="new-experience"
-                type="number"
-                min="0"
-                placeholder="Years of experience"
-                value={newDriverData.experienceYears}
-                onChange={(e) => setNewDriverData({...newDriverData, experienceYears: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="licenseType" className="text-right">
+                License Type
+              </Label>
+              <Input 
+                type="text" 
+                id="licenseType" 
+                value={licenseType} 
+                onChange={(e) => setLicenseType(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="new-contact">Contact Number</Label>
-              <Input
-                id="new-contact"
-                placeholder="Phone number"
-                value={newDriverData.contactNumber}
-                onChange={(e) => setNewDriverData({...newDriverData, contactNumber: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="experience" className="text-right">
+                Experience (Years)
+              </Label>
+              <Input 
+                type="number" 
+                id="experience" 
+                value={experience.toString()} 
+                onChange={(e) => setExperience(parseInt(e.target.value))} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="new-address">Address</Label>
-              <Input
-                id="new-address"
-                placeholder="Residential address"
-                value={newDriverData.address}
-                onChange={(e) => setNewDriverData({...newDriverData, address: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="isExternal" className="text-right">
+                Is External
+              </Label>
+              <div className="col-span-3 flex items-center">
+                <Switch 
+                  id="isExternal" 
+                  checked={isExternal} 
+                  onCheckedChange={setIsExternal} 
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="contactNumber" className="text-right">
+                Contact Number
+              </Label>
+              <Input 
+                type="text" 
+                id="contactNumber" 
+                value={contactNumber} 
+                onChange={(e) => setContactNumber(e.target.value)} 
+                className="col-span-3" 
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="address" className="text-right">
+                Address
+              </Label>
+              <Input 
+                type="text" 
+                id="address" 
+                value={address} 
+                onChange={(e) => setAddress(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
           </div>
@@ -399,79 +320,99 @@ const AdminDrivers = () => {
           <DialogHeader>
             <DialogTitle>Edit Driver</DialogTitle>
             <DialogDescription>
-              Update driver details
+              Edit the details for the selected driver.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Driver Name *</Label>
-              <Input
-                id="edit-name"
-                placeholder="Full name"
-                value={editDriverData.name}
-                onChange={(e) => setEditDriverData({...editDriverData, name: e.target.value})}
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input 
+                type="text" 
+                id="name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="edit-license">License Number *</Label>
-              <Input
-                id="edit-license"
-                placeholder="e.g. DL-1234567890"
-                value={editDriverData.licenseNumber}
-                onChange={(e) => setEditDriverData({...editDriverData, licenseNumber: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="licenseNumber" className="text-right">
+                License Number
+              </Label>
+              <Input 
+                type="text" 
+                id="licenseNumber" 
+                value={licenseNumber} 
+                onChange={(e) => setLicenseNumber(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="edit-license-type">License Type</Label>
-              <Select
-                value={editDriverData.licenseType}
-                onValueChange={(value) => setEditDriverData({...editDriverData, licenseType: value})}
-              >
-                <SelectTrigger id="edit-license-type">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="LMV">LMV (Light Motor Vehicle)</SelectItem>
-                  <SelectItem value="HMV">HMV (Heavy Motor Vehicle)</SelectItem>
-                  <SelectItem value="MCWG">MCWG (Motorcycle with Gear)</SelectItem>
-                  <SelectItem value="MCWOG">MCWOG (Motorcycle without Gear)</SelectItem>
-                  <SelectItem value="HGMV">HGMV (Heavy Goods Motor Vehicle)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-experience">Experience (Years)</Label>
-              <Input
-                id="edit-experience"
-                type="number"
-                min="0"
-                placeholder="Years of experience"
-                value={editDriverData.experienceYears}
-                onChange={(e) => setEditDriverData({...editDriverData, experienceYears: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="licenseType" className="text-right">
+                License Type
+              </Label>
+              <Input 
+                type="text" 
+                id="licenseType" 
+                value={licenseType} 
+                onChange={(e) => setLicenseType(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="edit-contact">Contact Number</Label>
-              <Input
-                id="edit-contact"
-                placeholder="Phone number"
-                value={editDriverData.contactNumber}
-                onChange={(e) => setEditDriverData({...editDriverData, contactNumber: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="experience" className="text-right">
+                Experience (Years)
+              </Label>
+              <Input 
+                type="number" 
+                id="experience" 
+                value={experience.toString()} 
+                onChange={(e) => setExperience(parseInt(e.target.value))} 
+                className="col-span-3" 
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="edit-address">Address</Label>
-              <Input
-                id="edit-address"
-                placeholder="Residential address"
-                value={editDriverData.address}
-                onChange={(e) => setEditDriverData({...editDriverData, address: e.target.value})}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="isExternal" className="text-right">
+                Is External
+              </Label>
+              <div className="col-span-3 flex items-center">
+                <Switch 
+                  id="isExternal" 
+                  checked={isExternal} 
+                  onCheckedChange={setIsExternal} 
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="contactNumber" className="text-right">
+                Contact Number
+              </Label>
+              <Input 
+                type="text" 
+                id="contactNumber" 
+                value={contactNumber} 
+                onChange={(e) => setContactNumber(e.target.value)} 
+                className="col-span-3" 
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="address" className="text-right">
+                Address
+              </Label>
+              <Input 
+                type="text" 
+                id="address" 
+                value={address} 
+                onChange={(e) => setAddress(e.target.value)} 
+                className="col-span-3" 
               />
             </div>
           </div>
@@ -481,7 +422,7 @@ const AdminDrivers = () => {
               Cancel
             </Button>
             <Button onClick={handleEditDriver}>
-              Save Changes
+              Update Driver
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -493,29 +434,16 @@ const AdminDrivers = () => {
           <DialogHeader>
             <DialogTitle>Delete Driver</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this driver? This action cannot be undone.
+              Are you sure you want to delete this driver?
             </DialogDescription>
           </DialogHeader>
-          
-          {selectedDriver && (
-            <div className="space-y-4">
-              <div className="p-4 border rounded-md">
-                <div><strong>Name:</strong> {selectedDriver.name}</div>
-                <div><strong>License:</strong> {selectedDriver.licenseNumber} ({selectedDriver.licenseType})</div>
-                <div><strong>Experience:</strong> {selectedDriver.experience} years</div>
-                {selectedDriver.contactNumber && (
-                  <div><strong>Contact:</strong> {selectedDriver.contactNumber}</div>
-                )}
-              </div>
-            </div>
-          )}
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteDriver}>
-              Delete Driver
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
