@@ -13,3 +13,8 @@ export function formatCurrency(amount: number): string {
     minimumFractionDigits: 2
   }).format(amount);
 }
+
+// Add a type assertion function for string values
+export function asString<T extends string>(value: unknown): T {
+  return value as T;
+}

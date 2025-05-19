@@ -1,7 +1,5 @@
 
 import { useState } from 'react';
-import { PhotoWithMetadata, Location } from '@/lib/types';
-import { getCurrentLocation } from '@/lib/storage';
 import { toast } from '@/components/ui/sonner';
 
 export const useCamera = () => {
@@ -13,7 +11,10 @@ export const useCamera = () => {
     try {
       // In a real app, this would use the device camera API
       // For demo purposes, we'll simulate a camera capture with a placeholder image
-      const location = await getCurrentLocation();
+      const mockLocation = {
+        latitude: 12.9716,
+        longitude: 77.5946
+      };
       
       // This is a data URL for a small placeholder image (1x1 pixel)
       // In a real implementation, this would be the actual captured photo
