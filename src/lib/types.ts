@@ -51,6 +51,15 @@ export interface PhotoWithMetadata {
   location: Location;
 }
 
+export interface DocumentFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
+  timestamp: string;
+}
+
 export interface ProgressUpdate {
   id: string;
   projectId: string;
@@ -62,6 +71,7 @@ export interface ProgressUpdate {
   vehicleId?: string;
   startMeterReading?: PhotoWithMetadata;
   endMeterReading?: PhotoWithMetadata;
+  documents?: DocumentFile[];
 }
 
 export interface PaymentRequest {

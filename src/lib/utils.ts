@@ -1,6 +1,7 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { UserRole } from "./types"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -20,17 +21,17 @@ export function asString<T extends string>(value: unknown): T {
 }
 
 // Add a specific type assertion function for UserRole
-export function asUserRole(value: string): string {
-  return value;
+export function asUserRole(value: string): UserRole {
+  return value as UserRole;
 }
 
 // Generate vibrant gradient background based on index
 export function getGradientByIndex(index: number): string {
   const gradients = [
-    'bg-gradient-to-br from-custom-pastel-blue/30 to-custom-pastel-purple/30',
-    'bg-gradient-to-br from-custom-pastel-green/30 to-custom-pastel-blue/30',
-    'bg-gradient-to-br from-custom-pastel-yellow/30 to-custom-pastel-green/30',
-    'bg-gradient-to-br from-custom-pastel-pink/30 to-custom-pastel-blue/30',
+    'bg-gradient-to-br from-purple-100/30 to-indigo-100/30',
+    'bg-gradient-to-br from-green-100/30 to-blue-100/30',
+    'bg-gradient-to-br from-yellow-100/30 to-green-100/30',
+    'bg-gradient-to-br from-pink-100/30 to-blue-100/30',
   ];
   
   return gradients[index % gradients.length];

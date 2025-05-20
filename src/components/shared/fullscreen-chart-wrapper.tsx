@@ -20,13 +20,16 @@ export const FullscreenChartWrapper = ({ children, title }: FullscreenChartWrapp
   
   return (
     <div onClick={handleOpen} className="cursor-pointer">
-      <FullscreenChart 
-        title={title}
-        onClose={handleClose}
-        isOpen={isOpen}
-      >
-        {React.cloneElement(children)}
-      </FullscreenChart>
+      {children}
+      {isOpen && (
+        <FullscreenChart 
+          title={title}
+          onClose={handleClose}
+          isOpen={isOpen}
+        >
+          {React.cloneElement(children)}
+        </FullscreenChart>
+      )}
     </div>
   );
 };
