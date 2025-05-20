@@ -234,7 +234,7 @@ const LeaderRequestPayment = () => {
                       <SelectValue placeholder="Select a progress update" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {progressUpdates.map(update => (
                         <SelectItem key={update.id} value={update.id}>
                           {new Date(update.date).toLocaleDateString()} - {update.completedWork}m
