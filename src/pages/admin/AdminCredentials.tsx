@@ -213,7 +213,12 @@ const AdminCredentials = () => {
                           <Button variant="ghost" size="sm" onClick={() => openEditDialog(user)}>
                             Edit
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(user)}>
+                          <Button 
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => openDeleteDialog(user)}
+                          >
                             Delete
                           </Button>
                         </td>

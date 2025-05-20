@@ -126,10 +126,10 @@
   cursor: pointer;
 }
 
-/* Make main content adjust to sidebar */
+/* Make main content adjust to sidebar - REDUCED SPACING */
 @media (min-width: 1024px) {
   main {
-    margin-left: 16rem;
+    margin-left: 12rem; /* Reduced from 16rem to 12rem */
   }
 }
 
