@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, ReactElement } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -13,24 +13,69 @@ interface ChartDataItem {
 
 interface FullscreenChartProps {
   title: string;
-  data: ChartDataItem[];
-  type: 'pie' | 'bar';
+  data?: ChartDataItem[];
+  type?: 'pie' | 'bar';
   valueFormatter?: (value: number) => string;
   showZeroValues?: boolean;
+  children?: ReactElement;
+  onClose?: () => void;
+  isOpen?: boolean;
 }
 
 export function FullscreenChart({
   title,
-  data,
-  type,
+  data = [],
+  type = 'pie',
   valueFormatter = (value) => `${value}%`,
   showZeroValues = false,
+  children,
+  onClose,
+  isOpen,
 }: FullscreenChartProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(isOpen || false);
 
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+    if (onClose) {
+      onClose();
+    } else {
+      setIsFullscreen(!isFullscreen);
+    }
   };
+
+  // If children are provided, render them instead of the built-in charts
+  if (children) {
+    if (isFullscreen || isOpen) {
+      return (
+        <div className="chart-fullscreen fixed inset-0 bg-background z-50 flex flex-col p-6">
+          <div className="flex justify-between items-center mb-4 w-full">
+            <h2 className="text-2xl font-bold">{title}</h2>
+            <Button
+              variant="outline"
+              size="icon"
+              className="close-button"
+              onClick={toggleFullscreen}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="flex-1 w-full h-full">
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Card className="w-full" onClick={toggleFullscreen}>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="chart-normal h-80">
+          {children}
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Filter out any items with value 0 if showZeroValues is false
   const filteredData = showZeroValues 

@@ -19,16 +19,16 @@ export const FullscreenChartWrapper = ({ children, title }: FullscreenChartWrapp
   };
   
   return (
-    <div onClick={handleOpen} className="cursor-pointer">
-      {children}
-      {isOpen && (
+    <div onClick={handleOpen} className="cursor-pointer w-full h-full">
+      {isOpen ? (
         <FullscreenChart 
           title={title}
           onClose={handleClose}
           isOpen={isOpen}
-        >
-          {children}
-        </FullscreenChart>
+          children={children}
+        />
+      ) : (
+        children
       )}
     </div>
   );
