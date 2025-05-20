@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Login: React.FC = () => {
