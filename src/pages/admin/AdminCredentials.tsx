@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -136,6 +137,11 @@ const AdminCredentials = () => {
     
     return labels[role] || role;
   };
+  
+  // Fixed TypeScript handler for role selection
+  const handleRoleChange = (value: string) => {
+    setRole(value as UserRole);
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -254,7 +260,7 @@ const AdminCredentials = () => {
               <Label htmlFor="role" className="text-right">
                 Role
               </Label>
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={handleRoleChange}>
                 <SelectTrigger id="role" className="col-span-3">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -312,7 +318,7 @@ const AdminCredentials = () => {
               <Label htmlFor="role" className="text-right">
                 Role
               </Label>
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={handleRoleChange}>
                 <SelectTrigger id="role" className="col-span-3">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>

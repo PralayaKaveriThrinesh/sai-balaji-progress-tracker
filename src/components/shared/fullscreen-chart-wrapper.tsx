@@ -27,7 +27,7 @@ export const FullscreenChartWrapper = ({ children, title }: FullscreenChartWrapp
           onClose={handleClose}
           isOpen={isOpen}
         >
-          {React.cloneElement(children)}
+          {children}
         </FullscreenChart>
       )}
     </div>
