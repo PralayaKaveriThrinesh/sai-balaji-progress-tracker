@@ -1,15 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-provider';
-import { getUserByEmail, getAllUsers } from '@/lib/storage';
+import { getUserByEmail } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/sonner';
-import { Menu, Sun, Moon, LogIn, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Login: React.FC = () => {
@@ -37,17 +36,6 @@ const Login: React.FC = () => {
     }
 
     login(user);
-  };
-
-  const handleQuickLogin = (role: string) => {
-    const users = getAllUsers();
-    const user = users.find(u => u.role === role);
-    
-    if (user) {
-      login(user);
-    } else {
-      toast.error(`No ${role} user found`);
-    }
   };
 
   return (
@@ -147,27 +135,6 @@ const Login: React.FC = () => {
             <div className="text-sm text-center">
               <span className="text-muted-foreground">Don't have an account? </span>
               <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
-            </div>
-            <div className="text-sm text-center text-muted-foreground">
-              For demo purposes, you can sign in as:
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button variant="outline" size="sm" onClick={() => handleQuickLogin('admin')}
-                className="border-primary/20 hover:bg-primary/20">
-                Admin
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleQuickLogin('leader')}
-                className="border-primary/20 hover:bg-primary/20">
-                Leader
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleQuickLogin('checker')}
-                className="border-primary/20 hover:bg-primary/20">
-                Checker
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleQuickLogin('owner')}
-                className="border-primary/20 hover:bg-primary/20">
-                Owner
-              </Button>
             </div>
           </CardFooter>
         </Card>
