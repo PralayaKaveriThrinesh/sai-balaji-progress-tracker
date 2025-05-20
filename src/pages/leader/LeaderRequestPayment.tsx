@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,47 +16,127 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
+import { Camera, Plus, Trash2, Upload, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useCamera } from '@/hooks/use-camera';
+import { formatCurrency } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+
+// Temporary import from storage until we fully migrate
 import { 
   getAllProjects,
   getProgressUpdatesByProjectId,
   createPaymentRequest
 } from '@/lib/storage';
-import { Project, ProgressUpdate, PaymentPurpose } from '@/lib/types';
-import { Camera, Plus, Trash2, Upload, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useCamera } from '@/hooks/use-camera';
-import { formatCurrency } from '@/lib/utils';
 
 const LeaderRequestPayment = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { captureImage } = useCamera();
   
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>('');
-  const [progressUpdates, setProgressUpdates] = useState<ProgressUpdate[]>([]);
-  const [selectedProgressUpdate, setSelectedProgressUpdate] = useState<string>('');
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('');
+  const [progressUpdates, setProgressUpdates] = useState([]);
+  const [selectedProgressUpdate, setSelectedProgressUpdate] = useState('');
   
-  const [purposes, setPurposes] = useState<PaymentPurpose[]>([]);
-  const [purposeType, setPurposeType] = useState<"food" | "fuel" | "labour" | "vehicle" | "water" | "other">("food");
-  const [purposeAmount, setPurposeAmount] = useState<string>('');
-  const [purposeImages, setPurposeImages] = useState<string[]>([]);
-  const [showCameraDialog, setShowCameraDialog] = useState<boolean>(false);
-  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [purposes, setPurposes] = useState([]);
+  const [purposeType, setPurposeType] = useState("food");
+  const [purposeAmount, setPurposeAmount] = useState('');
+  const [purposeImages, setPurposeImages] = useState([]);
+  const [showCameraDialog, setShowCameraDialog] = useState(false);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Load projects on mount
   useEffect(() => {
     if (user) {
-      const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
-      setProjects(userProjects);
+      const fetchProjects = async () => {
+        try {
+          // First try to get from Supabase
+          const { data: supabaseProjects, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('leader_id', user.id);
+          
+          if (error) {
+            console.error("Error fetching projects from Supabase:", error);
+            // Fall back to local storage
+            const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
+            setProjects(userProjects);
+          } else if (supabaseProjects && supabaseProjects.length > 0) {
+            // Map Supabase projects to format expected by the app
+            const formattedProjects = supabaseProjects.map(project => ({
+              id: project.id,
+              name: project.name,
+              leaderId: project.leader_id,
+              workers: project.workers,
+              totalWork: project.total_work,
+              completedWork: project.completed_work,
+              createdAt: project.created_at
+            }));
+            setProjects(formattedProjects);
+          } else {
+            // Fall back to local storage if no projects in Supabase
+            const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
+            setProjects(userProjects);
+          }
+          setIsLoading(false);
+        } catch (err) {
+          console.error("Error in fetchProjects:", err);
+          // Fall back to local storage
+          const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
+          setProjects(userProjects);
+          setIsLoading(false);
+        }
+      };
+      
+      fetchProjects();
     }
   }, [user]);
   
   // Load progress updates when project changes
   useEffect(() => {
     if (selectedProject) {
-      const updates = getProgressUpdatesByProjectId(selectedProject);
-      setProgressUpdates(updates);
+      const fetchProgressUpdates = async () => {
+        try {
+          // First try to get from Supabase
+          const { data: supabaseUpdates, error } = await supabase
+            .from('progress_updates')
+            .select('*')
+            .eq('project_id', selectedProject);
+          
+          if (error) {
+            console.error("Error fetching progress updates from Supabase:", error);
+            // Fall back to local storage
+            const updates = getProgressUpdatesByProjectId(selectedProject);
+            setProgressUpdates(updates);
+          } else if (supabaseUpdates && supabaseUpdates.length > 0) {
+            // Map Supabase updates to format expected by the app
+            const formattedUpdates = supabaseUpdates.map(update => ({
+              id: update.id,
+              projectId: update.project_id,
+              date: update.date,
+              completedWork: update.completed_work,
+              timeTaken: update.time_taken,
+              notes: update.notes,
+              photos: [] // We'll need to fetch photos separately
+            }));
+            setProgressUpdates(formattedUpdates);
+          } else {
+            // Fall back to local storage if no updates in Supabase
+            const updates = getProgressUpdatesByProjectId(selectedProject);
+            setProgressUpdates(updates);
+          }
+        } catch (err) {
+          console.error("Error in fetchProgressUpdates:", err);
+          // Fall back to local storage
+          const updates = getProgressUpdatesByProjectId(selectedProject);
+          setProgressUpdates(updates);
+        }
+      };
+      
+      fetchProgressUpdates();
       setSelectedProgressUpdate('');
     } else {
       setProgressUpdates([]);
@@ -79,7 +160,7 @@ const LeaderRequestPayment = () => {
       return;
     }
     
-    const newPurpose: PaymentPurpose = {
+    const newPurpose = {
       type: purposeType,
       amount: parseFloat(purposeAmount),
       images: purposeImages.map(dataUrl => ({
@@ -97,7 +178,7 @@ const LeaderRequestPayment = () => {
     setPurposeImages([]);
   };
   
-  const handleRemovePurpose = (index: number) => {
+  const handleRemovePurpose = (index) => {
     const newPurposes = [...purposes];
     newPurposes.splice(index, 1);
     setPurposes(newPurposes);
@@ -116,7 +197,7 @@ const LeaderRequestPayment = () => {
     }
   };
   
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
@@ -135,13 +216,13 @@ const LeaderRequestPayment = () => {
     e.target.value = '';
   };
   
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = (index) => {
     const newImages = [...purposeImages];
     newImages.splice(index, 1);
     setPurposeImages(newImages);
   };
   
-  const handleSubmitRequest = () => {
+  const handleSubmitRequest = async () => {
     if (!selectedProject) {
       toast.error("Please select a project");
       return;
@@ -153,29 +234,90 @@ const LeaderRequestPayment = () => {
     }
     
     try {
-      const paymentRequest = createPaymentRequest({
-        projectId: selectedProject,
-        progressUpdateId: selectedProgressUpdate || undefined,
-        date: new Date().toISOString(),
-        purposes: purposes,
-        status: "pending",
-        totalAmount: totalAmount
-      });
+      // Generate a UUID for the payment request
+      const paymentRequestId = uuidv4();
       
-      if (paymentRequest) {
-        toast.success("Payment request submitted successfully");
-        navigate("/leader/view-payment");
-      } else {
-        toast.error("Failed to submit payment request");
+      // Try to save to Supabase first
+      try {
+        // First, insert the payment request
+        const { error: requestError } = await supabase
+          .from('payment_requests')
+          .insert({
+            id: paymentRequestId,
+            project_id: selectedProject,
+            progress_update_id: selectedProgressUpdate !== 'none' ? selectedProgressUpdate : null,
+            date: new Date().toISOString(),
+            status: 'pending',
+            total_amount: totalAmount
+          });
+        
+        if (requestError) throw requestError;
+        
+        // Then insert all purposes and their images
+        for (const purpose of purposes) {
+          // Generate a UUID for the purpose
+          const purposeId = uuidv4();
+          
+          // Insert the purpose
+          const { error: purposeError } = await supabase
+            .from('payment_purposes')
+            .insert({
+              id: purposeId,
+              payment_request_id: paymentRequestId,
+              type: purpose.type,
+              amount: purpose.amount
+            });
+          
+          if (purposeError) throw purposeError;
+          
+          // Insert all images for this purpose
+          for (const image of purpose.images) {
+            const { error: imageError } = await supabase
+              .from('purpose_images')
+              .insert({
+                purpose_id: purposeId,
+                data_url: image.dataUrl,
+                timestamp: image.timestamp,
+                latitude: image.location.latitude,
+                longitude: image.location.longitude
+              });
+            
+            if (imageError) throw imageError;
+          }
+        }
+        
+        toast.success("Payment request submitted successfully to Supabase");
+      } catch (supabaseError) {
+        console.error("Supabase error:", supabaseError);
+        
+        // Fall back to local storage
+        const paymentRequest = createPaymentRequest({
+          projectId: selectedProject,
+          progressUpdateId: selectedProgressUpdate !== 'none' ? selectedProgressUpdate : undefined,
+          date: new Date().toISOString(),
+          purposes: purposes,
+          status: "pending",
+          totalAmount: totalAmount
+        });
+        
+        if (!paymentRequest) {
+          throw new Error("Failed to create payment request in local storage");
+        }
+        
+        toast.success("Payment request saved locally (Supabase unavailable)");
       }
+      
+      // Redirect after successful submission
+      navigate("/leader/view-payment");
+      
     } catch (error) {
       console.error("Error submitting payment request:", error);
       toast.error("Failed to submit payment request");
     }
   };
   
-  const getPurposeTypeLabel = (type: string) => {
-    const typeMap: Record<string, string> = {
+  const getPurposeTypeLabel = (type) => {
+    const typeMap = {
       'food': 'Food',
       'fuel': 'Fuel',
       'labour': 'Labour',
@@ -186,6 +328,17 @@ const LeaderRequestPayment = () => {
     
     return typeMap[type] || type;
   };
+  
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center h-[80vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading projects...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto p-4">
@@ -254,7 +407,7 @@ const LeaderRequestPayment = () => {
                       <Label htmlFor="purpose-type">Purpose Type</Label>
                       <Select
                         value={purposeType}
-                        onValueChange={(value) => setPurposeType(value as "food" | "fuel" | "labour" | "vehicle" | "water" | "other")}
+                        onValueChange={(value) => setPurposeType(value)}
                       >
                         <SelectTrigger id="purpose-type">
                           <SelectValue placeholder="Select type" />

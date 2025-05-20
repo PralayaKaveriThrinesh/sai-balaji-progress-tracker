@@ -1,39 +1,44 @@
-
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { useMobile } from '@/hooks/use-mobile';
+import { Home, Truck, User, BarChart, Key, Database, FolderKanban, CreditCard } from 'lucide-react';
 
 interface SidebarProps {
-  isOpen: boolean;
-  toggleSidebar: () => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
   className?: string;
 }
 
-export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
-  const { user } = useAuth();
+export const Sidebar = ({ open, setOpen }: SidebarProps) => {
+  const { role } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const isMobile = useMobile();
 
-  // Toggle section expansion
-  const toggleSection = (section: string) => {
-    if (expandedSection === section) {
-      setExpandedSection(null);
-    } else {
-      setExpandedSection(section);
-    }
-  };
+  const adminItems = [
+    { name: "Dashboard", path: "/admin", icon: <Home className="h-4 w-4" /> },
+    { name: "Vehicles", path: "/admin/vehicles", icon: <Truck className="h-4 w-4" /> },
+    { name: "Drivers", path: "/admin/drivers", icon: <User className="h-4 w-4" /> },
+    { name: "Statistics", path: "/admin/statistics", icon: <BarChart className="h-4 w-4" /> },
+    { name: "Credentials", path: "/admin/credentials", icon: <Key className="h-4 w-4" /> },
+    { name: "Backup", path: "/admin/backup", icon: <Database className="h-4 w-4" /> }
+  ];
 
-  // Check if the current route matches
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const ownerItems = [
+    { name: "Dashboard", path: "/owner", icon: <Home className="h-4 w-4" /> },
+    { name: "Projects", path: "/owner/projects", icon: <FolderKanban className="h-4 w-4" /> },
+    { name: "Statistics", path: "/owner/statistics", icon: <BarChart className="h-4 w-4" /> },
+    { name: "Payment Queue", path: "/owner/payment-queue", icon: <CreditCard className="h-4 w-4" /> },
+    { name: "Backup", path: "/owner/backup", icon: <Database className="h-4 w-4" /> }
+  ];
 
   const renderLeaderMenu = () => (
     <div className="flex flex-col space-y-2">
-      <Link to="/leader" onClick={toggleSidebar}>
+      <Link to="/leader" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/leader') ? 'default' : 'ghost'}
           className={cn(
@@ -47,7 +52,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/leader/create-project" onClick={toggleSidebar}>
+      <Link to="/leader/create-project" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/leader/create-project') ? 'default' : 'ghost'}
           className={cn(
@@ -61,7 +66,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/leader/add-progress" onClick={toggleSidebar}>
+      <Link to="/leader/add-progress" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/leader/add-progress') ? 'default' : 'ghost'}
           className={cn(
@@ -75,7 +80,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/leader/view-progress" onClick={toggleSidebar}>
+      <Link to="/leader/view-progress" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/leader/view-progress') ? 'default' : 'ghost'}
           className={cn(
@@ -89,7 +94,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/leader/request-payment" onClick={toggleSidebar}>
+      <Link to="/leader/request-payment" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/leader/request-payment') ? 'default' : 'ghost'}
           className={cn(
@@ -103,7 +108,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/leader/view-payment" onClick={toggleSidebar}>
+      <Link to="/leader/view-payment" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/leader/view-payment') ? 'default' : 'ghost'}
           className={cn(
@@ -121,7 +126,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
 
   const renderCheckerMenu = () => (
     <div className="flex flex-col space-y-1">
-      <Link to="/checker" onClick={toggleSidebar}>
+      <Link to="/checker" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/checker') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -130,7 +135,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/checker/review-submissions" onClick={toggleSidebar}>
+      <Link to="/checker/review-submissions" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/checker/review-submissions') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -139,7 +144,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/checker/review-history" onClick={toggleSidebar}>
+      <Link to="/checker/review-history" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/checker/review-history') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -148,7 +153,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/checker/projects" onClick={toggleSidebar}>
+      <Link to="/checker/projects" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/checker/projects') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -161,7 +166,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
 
   const renderOwnerMenu = () => (
     <div className="flex flex-col space-y-1">
-      <Link to="/owner" onClick={toggleSidebar}>
+      <Link to="/owner" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/owner') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -170,7 +175,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/owner/payment-queue" onClick={toggleSidebar}>
+      <Link to="/owner/payment-queue" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/owner/payment-queue') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -179,7 +184,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/owner/projects" onClick={toggleSidebar}>
+      <Link to="/owner/projects" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/owner/projects') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -188,7 +193,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/owner/statistics" onClick={toggleSidebar}>
+      <Link to="/owner/statistics" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/owner/statistics') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -201,7 +206,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
 
   const renderAdminMenu = () => (
     <div className="flex flex-col space-y-1">
-      <Link to="/admin" onClick={toggleSidebar}>
+      <Link to="/admin" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/admin') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -210,7 +215,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/admin/credentials" onClick={toggleSidebar}>
+      <Link to="/admin/credentials" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/admin/credentials') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -219,7 +224,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/admin/vehicles" onClick={toggleSidebar}>
+      <Link to="/admin/vehicles" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/admin/vehicles') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -228,7 +233,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/admin/drivers" onClick={toggleSidebar}>
+      <Link to="/admin/drivers" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/admin/drivers') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -237,7 +242,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </Button>
       </Link>
       
-      <Link to="/admin/statistics" onClick={toggleSidebar}>
+      <Link to="/admin/statistics" onClick={() => setOpen(false)}>
         <Button
           variant={isActive('/admin/statistics') ? 'default' : 'ghost'}
           className="w-full justify-start"
@@ -253,7 +258,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
       className={cn(
         "fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-border pt-16 z-20 transition-transform duration-200 ease-in-out transform lg:transform-none lg:relative",
         "backdrop-blur-sm shadow-lg shadow-sidebar/10",
-        isOpen ? "translate-x-0" : "-translate-x-full",
+        open ? "translate-x-0" : "-translate-x-full",
         className
       )}
     >
@@ -266,7 +271,7 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
               variant="ghost" 
               size="icon"
               className="lg:hidden text-white hover:bg-white/20"
-              onClick={toggleSidebar}
+              onClick={() => setOpen(false)}
             >
               <X className="h-5 w-5" />
             </Button>
@@ -274,11 +279,11 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </div>
 
         {/* Menu based on user role */}
-        {user?.role === 'leader' && renderLeaderMenu()}
-        {user?.role === 'checker' && renderCheckerMenu()}
-        {user?.role === 'owner' && renderOwnerMenu()}
-        {user?.role === 'admin' && renderAdminMenu()}
+        {role === 'leader' && renderLeaderMenu()}
+        {role === 'checker' && renderCheckerMenu()}
+        {role === 'owner' && renderOwnerMenu()}
+        {role === 'admin' && renderAdminMenu()}
       </div>
     </aside>
   );
-}
+};
