@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
@@ -13,11 +14,16 @@ interface SidebarProps {
   className?: string;
 }
 
-export const Sidebar = ({ open, setOpen }: SidebarProps) => {
+export const Sidebar = ({ open, setOpen, className }: SidebarProps) => {
   const { role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMobile();
+
+  // Add isActive function to check if a route is active
+  const isActive = (path: string): boolean => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
 
   const adminItems = [
     { name: "Dashboard", path: "/admin", icon: <Home className="h-4 w-4" /> },

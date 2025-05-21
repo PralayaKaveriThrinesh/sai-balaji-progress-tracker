@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/auth-context';
-import Layout from './components/layout/layout';
+import { Layout } from './components/layout/layout';
 import Login from './pages/auth/Login';
 import LeaderDashboard from './pages/leader/LeaderDashboard';
 import LeaderCreateProject from './pages/leader/LeaderCreateProject';

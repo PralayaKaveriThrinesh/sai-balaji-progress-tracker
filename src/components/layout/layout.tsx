@@ -70,8 +70,8 @@ export function Layout({ children }: LayoutProps) {
       <Navbar toggleSidebar={toggleSidebar} />
       <div className="flex">
         <Sidebar 
-          isOpen={sidebarOpen} 
-          toggleSidebar={toggleSidebar} 
+          open={sidebarOpen} 
+          setOpen={setSidebarOpen} 
           className={`sidebar fixed lg:sticky z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         />
         <main 

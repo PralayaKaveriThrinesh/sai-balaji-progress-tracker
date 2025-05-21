@@ -4,26 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/components/ui/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { FileDown, Link, Plus, Trash2, FileEdit } from 'lucide-react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 // Import the type augmentation for jsPDF instead of the module
-// This fixes the "Failed to resolve import "jspdf-autotable"" error
 import 'jspdf-autotable';
+import { CustomDatabase } from '@/types/supabase-database-types';
 
 // Add type augmentation for the autoTable method
 declare module 'jspdf' {
@@ -38,9 +30,9 @@ declare module 'jspdf' {
 interface BackupLink {
   id: string;
   url: string;
-  description: string;
-  created_at: string;
+  description?: string;
   created_by: string;
+  created_at: string;
 }
 
 const AdminBackup = () => {
@@ -52,46 +44,44 @@ const AdminBackup = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentLink, setCurrentLink] = useState<BackupLink | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
+  const [exportFormat, setExportFormat] = useState('excel');
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   
   // Fetch backup links
   useEffect(() => {
     const fetchBackupLinks = async () => {
       if (!user) return;
-      
       try {
         const { data, error } = await supabase
-          .from('backup_links')
+          .from('backup_links' as keyof CustomDatabase['public']['Tables'])
           .select('*')
           .order('created_at', { ascending: false });
         
         if (error) {
           console.error('Error fetching backup links:', error);
-          toast.error('Failed to fetch backup links');
+          toast({ title: "Error", description: "Failed to fetch backup links", variant: "destructive" });
           return;
         }
         
         setBackupLinks(data || []);
       } catch (error) {
         console.error('Error in fetchBackupLinks:', error);
-        toast.error('An error occurred while fetching backup links');
+        toast({ title: "Error", description: "An error occurred while fetching backup links", variant: "destructive" });
       }
     };
     
     fetchBackupLinks();
     
     // Set up realtime subscription for backup_links table
-    const channel = supabase
-      .channel('backup_links_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'backup_links' },
-        (payload) => {
-          console.log('Backup links changed:', payload);
-          fetchBackupLinks();
-        }
-      )
+    const channel = supabase.channel('backup_links_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'backup_links'
+      }, (payload) => {
+        console.log('Backup links changed:', payload);
+        fetchBackupLinks();
+      })
       .subscribe();
     
     return () => {
@@ -101,65 +91,67 @@ const AdminBackup = () => {
   
   const handleAddLink = async () => {
     if (!newLink) {
-      toast.error('Please enter a backup link');
+      toast({ title: "Error", description: "Please enter a backup link", variant: "destructive" });
       return;
     }
     
     if (!user) {
-      toast.error('You must be logged in to add backup links');
-      return;
-    }
-    
-    try {
-      const { error } = await supabase.from('backup_links').insert({
-        url: newLink,
-        description: newLinkDescription,
-        created_by: user.id
-      });
-      
-      if (error) {
-        console.error('Error adding backup link:', error);
-        toast.error('Failed to add backup link');
-        return;
-      }
-      
-      toast.success('Backup link added successfully');
-      setIsAddDialogOpen(false);
-      setNewLink('');
-      setNewLinkDescription('');
-    } catch (error) {
-      console.error('Error in handleAddLink:', error);
-      toast.error('An error occurred while adding the backup link');
-    }
-  };
-  
-  const handleEditLink = async () => {
-    if (!currentLink || !currentLink.url) {
-      toast.error('Please enter a valid URL');
+      toast({ title: "Error", description: "You must be logged in to add backup links", variant: "destructive" });
       return;
     }
     
     try {
       const { error } = await supabase
-        .from('backup_links')
+        .from('backup_links' as keyof CustomDatabase['public']['Tables'])
+        .insert({
+          url: newLink,
+          description: newLinkDescription,
+          created_by: user.id
+        } as any);
+      
+      if (error) {
+        console.error('Error adding backup link:', error);
+        toast({ title: "Error", description: "Failed to add backup link", variant: "destructive" });
+        return;
+      }
+      
+      toast({ title: "Success", description: "Backup link added successfully" });
+      setIsAddDialogOpen(false);
+      setNewLink('');
+      setNewLinkDescription('');
+    } catch (error) {
+      console.error('Error in handleAddLink:', error);
+      toast({ title: "Error", description: "An error occurred while adding the backup link", variant: "destructive" });
+    }
+  };
+  
+  const handleEditLink = async () => {
+    if (!currentLink || !currentLink.url) {
+      toast({ title: "Error", description: "Please enter a valid URL", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('backup_links' as keyof CustomDatabase['public']['Tables'])
         .update({
           url: currentLink.url,
           description: currentLink.description || ''
-        })
+        } as any)
         .eq('id', currentLink.id);
       
       if (error) {
         console.error('Error updating backup link:', error);
-        toast.error('Failed to update backup link');
+        toast({ title: "Error", description: "Failed to update backup link", variant: "destructive" });
         return;
       }
       
-      toast.success('Backup link updated successfully');
+      toast({ title: "Success", description: "Backup link updated successfully" });
       setIsEditDialogOpen(false);
       setCurrentLink(null);
     } catch (error) {
       console.error('Error in handleEditLink:', error);
-      toast.error('An error occurred while updating the backup link');
+      toast({ title: "Error", description: "An error occurred while updating the backup link", variant: "destructive" });
     }
   };
   
@@ -176,14 +168,14 @@ const AdminBackup = () => {
       
       if (error) {
         console.error('Error deleting backup link:', error);
-        toast.error('Failed to delete backup link');
+        toast({ title: "Error", description: "Failed to delete backup link", variant: "destructive" });
         return;
       }
       
-      toast.success('Backup link deleted successfully');
+      toast({ title: "Success", description: "Backup link deleted successfully" });
     } catch (error) {
       console.error('Error in handleDeleteLink:', error);
-      toast.error('An error occurred while deleting the backup link');
+      toast({ title: "Error", description: "An error occurred while deleting the backup link", variant: "destructive" });
     }
   };
   
@@ -246,10 +238,10 @@ const AdminBackup = () => {
       // Save the file
       saveAs(data, `saibalaji_data_export_${new Date().toISOString().split('T')[0]}.xlsx`);
       
-      toast.success('Data exported successfully to Excel');
+      toast({ title: "Success", description: "Data exported successfully to Excel" });
     } catch (error) {
       console.error('Error exporting data to Excel:', error);
-      toast.error('Failed to export data');
+      toast({ title: "Error", description: "Failed to export data", variant: "destructive" });
     } finally {
       setIsExporting(false);
       setIsExportDialogOpen(false);
@@ -349,10 +341,10 @@ const AdminBackup = () => {
       // Save the PDF
       doc.save(`saibalaji_data_export_${new Date().toISOString().split('T')[0]}.pdf`);
       
-      toast.success('Data exported successfully to PDF');
+      toast({ title: "Success", description: "Data exported successfully to PDF" });
     } catch (error) {
       console.error('Error exporting data to PDF:', error);
-      toast.error('Failed to export data');
+      toast({ title: "Error", description: "Failed to export data", variant: "destructive" });
     } finally {
       setIsExporting(false);
       setIsExportDialogOpen(false);
