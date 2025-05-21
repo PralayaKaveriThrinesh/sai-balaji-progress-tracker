@@ -25,18 +25,13 @@ import {
 import { Languages, Menu, X } from 'lucide-react';
 import { LanguageSwitcher } from '../shared/language-switcher';
 
-const Navbar = () => {
+const Navbar = ({ toggleSidebar }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme } = useTheme();
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-    document.body.classList.toggle('sidebar-open');
-  };
   
   const closeSidebar = () => {
     setIsSidebarOpen(false);
@@ -59,7 +54,7 @@ const Navbar = () => {
           {/* Mobile menu button */}
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="sm" onClick={toggleSidebar}>
+              <Button variant="ghost" size="sm" onClick={() => toggleSidebar()}>
                 {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </SheetTrigger>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navbar } from '@/components/layout/navbar';
+import Navbar from '@/components/layout/navbar';
 import { Sidebar } from '@/components/layout/sidebar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
