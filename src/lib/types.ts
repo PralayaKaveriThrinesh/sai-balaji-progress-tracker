@@ -103,6 +103,14 @@ export interface CorrectionRequest {
   checkerNotes?: string;
 }
 
+export interface BackupLink {
+  id: string;
+  url: string;
+  description: string;
+  createdAt: string;
+  createdBy: string;
+}
+
 // Enhanced interfaces for tracking progress
 export interface LeaderProgressStats {
   leaderId: string;

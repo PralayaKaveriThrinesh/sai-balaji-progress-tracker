@@ -1,0 +1,72 @@
+
+{
+  "app": {
+    "name": "సాయి బాలాజీ ప్రోగ్రెస్ ట్రాకర్",
+    "navigation": {
+      "dashboard": "డాష్‌బోర్డ్",
+      "projects": "ప్రాజెక్టులు",
+      "createProject": "ప్రాజెక్ట్ సృష్టించండి",
+      "addProgress": "ప్రోగ్రెస్ జోడించండి",
+      "viewProgress": "ప్రోగ్రెస్ చూడండి",
+      "requestPayment": "చెల్లింపు అభ్యర్థించండి",
+      "viewPayment": "చెల్లింపులు చూడండి",
+      "reviewSubmissions": "సమర్పణలు సమీక్షించండి",
+      "reviewHistory": "సమీక్ష చరిత్ర",
+      "paymentQueue": "చెల్లింపు క్యూ",
+      "statistics": "గణాంకాలు",
+      "credentials": "ధృవీకరణ పత్రాలు",
+      "vehicles": "వాహనాలు",
+      "drivers": "డ్రైవర్లు",
+      "backup": "బ్యాకప్ లింక్‌లు"
+    },
+    "common": {
+      "submit": "సమర్పించండి",
+      "cancel": "రద్దు చేయండి",
+      "save": "సేవ్ చేయండి",
+      "edit": "సవరించండి",
+      "delete": "తొలగించండి",
+      "view": "చూడండి",
+      "search": "శోధించండి",
+      "filter": "ఫిల్టర్",
+      "status": "స్థితి",
+      "actions": "చర్యలు",
+      "loading": "లోడ్ అవుతోంది...",
+      "noData": "డేటా అందుబాటులో లేదు",
+      "back": "వెనుకకు",
+      "next": "తదుపరి",
+      "download": "డౌన్‌లోడ్",
+      "uploadLink": "లింక్ అప్‌లోడ్ చేయండి",
+      "description": "వివరణ",
+      "date": "తేదీ",
+      "createdAt": "సృష్టించబడింది",
+      "updatedAt": "నవీకరించబడింది",
+      "selectOption": "ఒక ఎంపికను ఎంచుకోండి",
+      "logout": "లాగ్అవుట్",
+      "profile": "ప్రొఫైల్"
+    },
+    "auth": {
+      "login": "లాగిన్",
+      "signup": "సైన్ అప్",
+      "email": "ఇమెయిల్",
+      "password": "పాస్‌వర్డ్",
+      "confirmPassword": "పాస్‌వర్డ్‌ను నిర్ధారించండి",
+      "name": "పూర్తి పేరు",
+      "forgotPassword": "పాస్‌వర్డ్ మర్చిపోయారా?",
+      "googleSignIn": "Google తో సైన్ ఇన్ చేయండి",
+      "signInPrompt": "ఇప్పటికే ఖాతా ఉందా?",
+      "signUpPrompt": "ఖాతా లేదా?",
+      "resetPassword": "పాస్‌వర్డ్‌ను రీసెట్ చేయండి",
+      "otpVerification": "OTP ధృవీకరణ",
+      "sendOTP": "OTP పంపండి",
+      "verifyOTP": "OTP ధృవీకరించండి",
+      "resendOTP": "OTP ను మళ్లీ పంపండి"
+    },
+    "dashboard": {
+      "welcome": "స్వాగతం",
+      "projectsCount": "ప్రాజెక్టులు",
+      "completedProjects": "పూర్తయింది",
+      "pendingPayments": "పెండింగ్ చెల్లింపులు",
+      "recentActivity": "ఇటీవలి కార్యాచరణ"
+    }
+  }
+}

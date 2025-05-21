@@ -1,0 +1,72 @@
+
+{
+  "app": {
+    "name": "Sai Balaji Progress Tracker",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "projects": "Projects",
+      "createProject": "Create Project",
+      "addProgress": "Add Progress",
+      "viewProgress": "View Progress",
+      "requestPayment": "Request Payment",
+      "viewPayment": "View Payments",
+      "reviewSubmissions": "Review Submissions",
+      "reviewHistory": "Review History",
+      "paymentQueue": "Payment Queue",
+      "statistics": "Statistics",
+      "credentials": "Credentials",
+      "vehicles": "Vehicles",
+      "drivers": "Drivers",
+      "backup": "Backup Links"
+    },
+    "common": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "view": "View",
+      "search": "Search",
+      "filter": "Filter",
+      "status": "Status",
+      "actions": "Actions",
+      "loading": "Loading...",
+      "noData": "No data available",
+      "back": "Back",
+      "next": "Next",
+      "download": "Download",
+      "uploadLink": "Upload Link",
+      "description": "Description",
+      "date": "Date",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "selectOption": "Select an option",
+      "logout": "Logout",
+      "profile": "Profile"
+    },
+    "auth": {
+      "login": "Login",
+      "signup": "Sign Up",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "name": "Full Name",
+      "forgotPassword": "Forgot Password?",
+      "googleSignIn": "Sign in with Google",
+      "signInPrompt": "Already have an account?",
+      "signUpPrompt": "Don't have an account?",
+      "resetPassword": "Reset Password",
+      "otpVerification": "OTP Verification",
+      "sendOTP": "Send OTP",
+      "verifyOTP": "Verify OTP",
+      "resendOTP": "Resend OTP"
+    },
+    "dashboard": {
+      "welcome": "Welcome",
+      "projectsCount": "Projects",
+      "completedProjects": "Completed",
+      "pendingPayments": "Pending Payments",
+      "recentActivity": "Recent Activity"
+    }
+  }
+}

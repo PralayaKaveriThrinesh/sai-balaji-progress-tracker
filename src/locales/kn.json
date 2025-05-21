@@ -1,0 +1,72 @@
+
+{
+  "app": {
+    "name": "ಸಾಯಿ ಬಾಲಾಜಿ ಪ್ರಗತಿ ಟ್ರ್ಯಾಕರ್",
+    "navigation": {
+      "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+      "projects": "ಯೋಜನೆಗಳು",
+      "createProject": "ಯೋಜನೆಯನ್ನು ರಚಿಸಿ",
+      "addProgress": "ಪ್ರಗತಿ ಸೇರಿಸಿ",
+      "viewProgress": "ಪ್ರಗತಿ ವೀಕ್ಷಿಸಿ",
+      "requestPayment": "ಪಾವತಿಗಾಗಿ ಕೋರಿಕೆ",
+      "viewPayment": "ಪಾವತಿಗಳನ್ನು ವೀಕ್ಷಿಸಿ",
+      "reviewSubmissions": "ಸಲ್ಲಿಕೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
+      "reviewHistory": "ಪರಿಶೀಲನೆ ಇತಿಹಾಸ",
+      "paymentQueue": "ಪಾವತಿ ಸರದಿ",
+      "statistics": "ಅಂಕಿಅಂಶಗಳು",
+      "credentials": "ಪರಿಚಯಪತ್ರಗಳು",
+      "vehicles": "ವಾಹನಗಳು",
+      "drivers": "ಚಾಲಕರು",
+      "backup": "ಬ್ಯಾಕಪ್ ಲಿಂಕ್‌ಗಳು"
+    },
+    "common": {
+      "submit": "ಸಲ್ಲಿಸಿ",
+      "cancel": "ರದ್ದುಮಾಡಿ",
+      "save": "ಉಳಿಸಿ",
+      "edit": "ಸಂಪಾದಿಸಿ",
+      "delete": "ಅಳಿಸಿ",
+      "view": "ವೀಕ್ಷಿಸಿ",
+      "search": "ಹುಡುಕಿ",
+      "filter": "ಫಿಲ್ಟರ್",
+      "status": "ಸ್ಥಿತಿ",
+      "actions": "ಕ್ರಿಯೆಗಳು",
+      "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+      "noData": "ಯಾವುದೇ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ",
+      "back": "ಹಿಂದೆ",
+      "next": "ಮುಂದೆ",
+      "download": "ಡೌನ್‌ಲೋಡ್",
+      "uploadLink": "ಲಿಂಕ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+      "description": "ವಿವರಣೆ",
+      "date": "ದಿನಾಂಕ",
+      "createdAt": "ರಚಿಸಲಾಗಿದೆ",
+      "updatedAt": "ನವೀಕರಿಸಲಾಗಿದೆ",
+      "selectOption": "ಆಯ್ಕೆಯನ್ನು ಆರಿಸಿ",
+      "logout": "ಲಾಗ್ಔಟ್",
+      "profile": "ಪ್ರೊಫೈಲ್"
+    },
+    "auth": {
+      "login": "ಲಾಗಿನ್",
+      "signup": "ಸೈನ್ ಅಪ್",
+      "email": "ಇಮೇಲ್",
+      "password": "ಪಾಸ್‌ವರ್ಡ್",
+      "confirmPassword": "ಪಾಸ್‌ವರ್ಡ್ ದೃಢೀಕರಿಸಿ",
+      "name": "ಪೂರ್ಣ ಹೆಸರು",
+      "forgotPassword": "ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?",
+      "googleSignIn": "Google ನೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ",
+      "signInPrompt": "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?",
+      "signUpPrompt": "ಖಾತೆ ಇಲ್ಲವೇ?",
+      "resetPassword": "ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ",
+      "otpVerification": "OTP ಪರಿಶೀಲನೆ",
+      "sendOTP": "OTP ಕಳುಹಿಸಿ",
+      "verifyOTP": "OTP ಪರಿಶೀಲಿಸಿ",
+      "resendOTP": "OTP ಮರುಕಳುಹಿಸಿ"
+    },
+    "dashboard": {
+      "welcome": "ಸ್ವಾಗತ",
+      "projectsCount": "ಯೋಜನೆಗಳು",
+      "completedProjects": "ಪೂರ್ಣಗೊಂಡಿದೆ",
+      "pendingPayments": "ಬಾಕಿ ಪಾವತಿಗಳು",
+      "recentActivity": "ಇತ್ತೀಚಿನ ಚಟುವಟಿಕೆ"
+    }
+  }
+}
