@@ -105,7 +105,7 @@ const AdminBackup = () => {
         .from('backup_links' as keyof CustomDatabase['public']['Tables'])
         .insert({
           url: newLink,
-          description: newLinkDescription,
+          description: newLinkDescription || '',
           created_by: user.id
         } as any);
       
@@ -162,7 +162,7 @@ const AdminBackup = () => {
     
     try {
       const { error } = await supabase
-        .from('backup_links')
+        .from('backup_links' as keyof CustomDatabase['public']['Tables'])
         .delete()
         .eq('id', id);
       
@@ -191,11 +191,11 @@ const AdminBackup = () => {
         { data: paymentPurposes },
         { data: profiles }
       ] = await Promise.all([
-        supabase.from('projects').select('*'),
-        supabase.from('progress_updates').select('*'),
-        supabase.from('payment_requests').select('*'),
-        supabase.from('payment_purposes').select('*'),
-        supabase.from('profiles').select('*')
+        supabase.from('projects' as keyof CustomDatabase['public']['Tables']).select('*'),
+        supabase.from('progress_updates' as keyof CustomDatabase['public']['Tables']).select('*'),
+        supabase.from('payment_requests' as keyof CustomDatabase['public']['Tables']).select('*'),
+        supabase.from('payment_purposes' as keyof CustomDatabase['public']['Tables']).select('*'),
+        supabase.from('profiles' as keyof CustomDatabase['public']['Tables']).select('*')
       ]);
       
       // Create workbook with multiple sheets
@@ -259,10 +259,10 @@ const AdminBackup = () => {
         { data: paymentRequests },
         { data: profiles }
       ] = await Promise.all([
-        supabase.from('projects').select('*'),
-        supabase.from('progress_updates').select('*'),
-        supabase.from('payment_requests').select('*'),
-        supabase.from('profiles').select('*')
+        supabase.from('projects' as keyof CustomDatabase['public']['Tables']).select('*'),
+        supabase.from('progress_updates' as keyof CustomDatabase['public']['Tables']).select('*'),
+        supabase.from('payment_requests' as keyof CustomDatabase['public']['Tables']).select('*'),
+        supabase.from('profiles' as keyof CustomDatabase['public']['Tables']).select('*')
       ]);
       
       // Create PDF document

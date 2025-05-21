@@ -44,15 +44,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
 
-          const userWithRole: User = {
-            id: session.user.id,
-            name: data?.name,
-            email: data?.email,
-            role: data?.role as UserRole,
-            password: '' // We don't want to expose the password
-          };
-          
-          setUser(userWithRole);
+          if (data) {
+            const userWithRole: User = {
+              id: session.user.id,
+              name: data?.name || '',
+              email: data?.email || '',
+              role: data?.role as UserRole || 'user',
+              password: '' // We don't want to expose the password
+            };
+            
+            setUser(userWithRole);
+          }
         }
       } catch (error) {
         console.error('Session loading error:', error);
@@ -77,15 +79,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
 
-          const userWithRole: User = {
-            id: session.user.id,
-            name: data?.name,
-            email: data?.email,
-            role: data?.role as UserRole,
-            password: '' // We don't want to expose the password
-          };
-          
-          setUser(userWithRole);
+          if (data) {
+            const userWithRole: User = {
+              id: session.user.id,
+              name: data?.name || '',
+              email: data?.email || '',
+              role: data?.role as UserRole || 'user',
+              password: '' // We don't want to expose the password
+            };
+            
+            setUser(userWithRole);
+          }
         } else {
           setUser(null);
         }
@@ -120,13 +124,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (userError) throw userError;
 
-        const role = userData?.role as UserRole;
+        if (userData) {
+          const role = userData?.role as UserRole || 'user';
 
-        // Navigate based on role
-        if (role === 'leader') navigate('/leader');
-        else if (role === 'checker') navigate('/checker');
-        else if (role === 'admin') navigate('/admin');
-        else if (role === 'owner') navigate('/owner');
+          // Navigate based on role
+          if (role === 'leader') navigate('/leader');
+          else if (role === 'checker') navigate('/checker');
+          else if (role === 'admin') navigate('/admin');
+          else if (role === 'owner') navigate('/owner');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);

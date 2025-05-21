@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'lucide-react';
+import { CustomDatabase } from '@/types/supabase-database-types';
 
 interface BackupLink {
   id: string;
@@ -27,7 +27,7 @@ const OwnerBackup = () => {
       try {
         setIsLoading(true);
         const { data, error } = await supabase
-          .from('backup_links')
+          .from('backup_links' as keyof CustomDatabase['public']['Tables'])
           .select('*')
           .order('created_at', { ascending: false });
         
