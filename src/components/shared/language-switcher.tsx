@@ -11,7 +11,7 @@ import { Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function LanguageSwitcher() {
-  const { language, changeLanguage, t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   
   return (
     <DropdownMenu>
@@ -22,13 +22,13 @@ export function LanguageSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => changeLanguage('en')}>
+        <DropdownMenuItem onClick={() => setLanguage('en')}>
           English {language === 'en' && '✓'}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => changeLanguage('te')}>
+        <DropdownMenuItem onClick={() => setLanguage('te')}>
           తెలుగు (Telugu) {language === 'te' && '✓'}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => changeLanguage('kn')}>
+        <DropdownMenuItem onClick={() => setLanguage('kn')}>
           ಕನ್ನಡ (Kannada) {language === 'kn' && '✓'}
         </DropdownMenuItem>
       </DropdownMenuContent>
