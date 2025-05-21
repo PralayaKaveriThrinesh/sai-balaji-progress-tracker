@@ -42,7 +42,7 @@ const LeaderCreateProject = () => {
     },
   });
   
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     if (!user) {
       toast.error("You must be logged in to create a project");
       return;
@@ -51,7 +51,6 @@ const LeaderCreateProject = () => {
     setIsSubmitting(true);
     
     try {
-      // Create project in local storage
       const newProject = createProject({
         name: values.name,
         leaderId: user.id,

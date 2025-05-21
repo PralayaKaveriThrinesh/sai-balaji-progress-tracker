@@ -1,91 +1,96 @@
 
-import { Routes, Route } from 'react-router-dom'
-import { Toaster } from '@/components/ui/sonner'
-import { ThemeProvider } from '@/context/theme-provider'
-import { AuthProvider } from '@/context/auth-context'
-import { LanguageProvider } from '@/context/language-context'
-import { Layout } from '@/components/layout/layout'
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "@/context/theme-provider";
+import { Layout } from "@/components/layout/layout";
+import { AuthProvider } from "@/context/auth-context";
 
-import Login from '@/pages/auth/Login'
-import NotFound from '@/pages/NotFound'
+// Pages
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
 
-// Admin routes
-import AdminDashboard from '@/pages/admin/AdminDashboard'
-import AdminCredentials from '@/pages/admin/AdminCredentials'
-import AdminDrivers from '@/pages/admin/AdminDrivers'
-import AdminVehicles from '@/pages/admin/AdminVehicles'
-import AdminStatistics from '@/pages/admin/AdminStatistics'
-import AdminBackup from '@/pages/admin/AdminBackup'
+// Leader Pages
+import LeaderDashboard from "@/pages/leader/LeaderDashboard";
+import LeaderCreateProject from "@/pages/leader/LeaderCreateProject";
+import LeaderAddProgress from "@/pages/leader/LeaderAddProgress";
+import LeaderViewProgress from "@/pages/leader/LeaderViewProgress";
+import LeaderRequestPayment from "@/pages/leader/LeaderRequestPayment";
+import LeaderViewPayment from "@/pages/leader/LeaderViewPayment";
 
-// Leader routes
-import LeaderDashboard from '@/pages/leader/LeaderDashboard'
-import LeaderCreateProject from '@/pages/leader/LeaderCreateProject'
-import LeaderAddProgress from '@/pages/leader/LeaderAddProgress'
-import LeaderViewProgress from '@/pages/leader/LeaderViewProgress'
-import LeaderRequestPayment from '@/pages/leader/LeaderRequestPayment'
-import LeaderViewPayment from '@/pages/leader/LeaderViewPayment'
+// Checker Pages
+import CheckerDashboard from "./pages/checker/CheckerDashboard";
+import CheckerReviewSubmissions from "./pages/checker/CheckerReviewSubmissions";
+import CheckerReviewHistory from "@/pages/checker/CheckerReviewHistory";
+import CheckerProjects from "@/pages/checker/CheckerProjects";
 
-// Checker routes
-import CheckerDashboard from '@/pages/checker/CheckerDashboard'
-import CheckerReviewSubmissions from '@/pages/checker/CheckerReviewSubmissions'
-import CheckerReviewHistory from '@/pages/checker/CheckerReviewHistory'
-import CheckerProjects from '@/pages/checker/CheckerProjects'
+// Owner Pages
+import OwnerDashboard from "@/pages/owner/OwnerDashboard";
+import OwnerPaymentQueue from "./pages/owner/OwnerPaymentQueue";
+import OwnerProjects from "@/pages/owner/OwnerProjects";
+import OwnerStatistics from "@/pages/owner/OwnerStatistics";
 
-// Owner routes
-import OwnerDashboard from '@/pages/owner/OwnerDashboard'
-import OwnerPaymentQueue from '@/pages/owner/OwnerPaymentQueue'
-import OwnerProjects from '@/pages/owner/OwnerProjects'
-import OwnerStatistics from '@/pages/owner/OwnerStatistics'
-import OwnerBackup from '@/pages/owner/OwnerBackup'
+// Admin Pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminCredentials from "./pages/admin/AdminCredentials";
+import AdminVehicles from "@/pages/admin/AdminVehicles";
+import AdminDrivers from "@/pages/admin/AdminDrivers";
+import AdminStatistics from "@/pages/admin/AdminStatistics";
 
-function App() {
-  return (
-    <ThemeProvider>
-      <LanguageProvider>
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <ThemeProvider>
         <AuthProvider>
-          <Layout>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <Routes>
-              {/* Public routes */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               
-              {/* Admin routes */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/credentials" element={<AdminCredentials />} />
-              <Route path="/admin/drivers" element={<AdminDrivers />} />
-              <Route path="/admin/vehicles" element={<AdminVehicles />} />
-              <Route path="/admin/statistics" element={<AdminStatistics />} />
-              <Route path="/admin/backup" element={<AdminBackup />} />
+              {/* Leader Routes */}
+              <Route path="/leader" element={<Layout><LeaderDashboard /></Layout>} />
+              <Route path="/leader/create-project" element={<Layout><LeaderCreateProject /></Layout>} />
+              <Route path="/leader/add-progress" element={<Layout><LeaderAddProgress /></Layout>} />
+              <Route path="/leader/view-progress" element={<Layout><LeaderViewProgress /></Layout>} />
+              <Route path="/leader/request-payment" element={<Layout><LeaderRequestPayment /></Layout>} />
+              <Route path="/leader/view-payment" element={<Layout><LeaderViewPayment /></Layout>} />
               
-              {/* Leader routes */}
-              <Route path="/leader" element={<LeaderDashboard />} />
-              <Route path="/leader/create-project" element={<LeaderCreateProject />} />
-              <Route path="/leader/add-progress" element={<LeaderAddProgress />} />
-              <Route path="/leader/view-progress" element={<LeaderViewProgress />} />
-              <Route path="/leader/request-payment" element={<LeaderRequestPayment />} />
-              <Route path="/leader/view-payment" element={<LeaderViewPayment />} />
+              {/* Checker Routes */}
+              <Route path="/checker" element={<Layout><CheckerDashboard /></Layout>} />
+              <Route path="/checker/review-submissions" element={<Layout><CheckerReviewSubmissions /></Layout>} />
+              <Route path="/checker/review-history" element={<Layout><CheckerReviewHistory /></Layout>} />
+              <Route path="/checker/projects" element={<Layout><CheckerProjects /></Layout>} />
               
-              {/* Checker routes */}
-              <Route path="/checker" element={<CheckerDashboard />} />
-              <Route path="/checker/review-submissions" element={<CheckerReviewSubmissions />} />
-              <Route path="/checker/review-history" element={<CheckerReviewHistory />} />
-              <Route path="/checker/projects" element={<CheckerProjects />} />
+              {/* Owner Routes */}
+              <Route path="/owner" element={<Layout><OwnerDashboard /></Layout>} />
+              <Route path="/owner/payment-queue" element={<Layout><OwnerPaymentQueue /></Layout>} />
+              <Route path="/owner/projects" element={<Layout><OwnerProjects /></Layout>} />
+              <Route path="/owner/statistics" element={<Layout><OwnerStatistics /></Layout>} />
               
-              {/* Owner routes */}
-              <Route path="/owner" element={<OwnerDashboard />} />
-              <Route path="/owner/payment-queue" element={<OwnerPaymentQueue />} />
-              <Route path="/owner/projects" element={<OwnerProjects />} />
-              <Route path="/owner/statistics" element={<OwnerStatistics />} />
-              <Route path="/owner/backup" element={<OwnerBackup />} />
+              {/* Admin Routes */}
+              <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
+              <Route path="/admin/credentials" element={<Layout><AdminCredentials /></Layout>} />
+              <Route path="/admin/vehicles" element={<Layout><AdminVehicles /></Layout>} />
+              <Route path="/admin/drivers" element={<Layout><AdminDrivers /></Layout>} />
+              <Route path="/admin/statistics" element={<Layout><AdminStatistics /></Layout>} />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <Toaster position="bottom-right" />
-          </Layout>
+          </TooltipProvider>
         </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  )
-}
+      </ThemeProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
+);
 
-export default App
+export default App;
