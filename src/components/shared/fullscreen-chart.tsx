@@ -66,7 +66,7 @@ export function FullscreenChart({
     }
 
     return (
-      <Card className="w-full" onClick={toggleFullscreen}>
+      <Card className="w-full" onClick={() => setIsFullscreen(true)}>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
@@ -144,7 +144,7 @@ export function FullscreenChart({
 
   if (isFullscreen) {
     return (
-      <div className="chart-fullscreen">
+      <div className="chart-fullscreen fixed inset-0 bg-background z-50 flex flex-col p-6">
         <div className="flex justify-between items-center mb-4 w-full">
           <h2 className="text-2xl font-bold">{title}</h2>
           <Button
@@ -164,7 +164,7 @@ export function FullscreenChart({
   }
 
   return (
-    <Card className="w-full" onClick={toggleFullscreen}>
+    <Card className="w-full" onClick={() => setIsFullscreen(true)}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
