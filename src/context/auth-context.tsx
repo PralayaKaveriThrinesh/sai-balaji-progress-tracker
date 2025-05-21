@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { UserRole, User } from '@/lib/types';
 import { toast } from '@/components/ui/sonner';
 
@@ -25,7 +24,6 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const navigate = useNavigate();
 
   // Generate a mock OTP
   const generateOtp = () => {
@@ -124,11 +122,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       toast.success('Login successful');
       
-      // Navigate based on role
-      if (foundUser.role === 'leader') navigate('/leader');
-      else if (foundUser.role === 'checker') navigate('/checker');
-      else if (foundUser.role === 'admin') navigate('/admin');
-      else if (foundUser.role === 'owner') navigate('/owner');
+      // Return the user's role so the calling component can navigate
+      return foundUser.role;
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Invalid email or password');
@@ -147,7 +142,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       setUser(null);
       localStorage.removeItem('user');
-      navigate('/login');
       toast.success('Logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);

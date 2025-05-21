@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
@@ -23,9 +24,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Languages, Menu, X } from 'lucide-react';
-import { LanguageSwitcher } from '../shared/language-switcher';
+import { LanguageSwitcher } from '@/components/shared/language-switcher';
 
-const Navbar = ({ toggleSidebar }) => {
+interface NavbarProps {
+  toggleSidebar: () => void;
+}
+
+const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme } = useTheme();
   const { t } = useLanguage();

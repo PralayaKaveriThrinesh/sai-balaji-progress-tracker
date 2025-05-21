@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -27,7 +28,7 @@ const registerSchema = z.object({
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { login, register: registerUser } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,7 +49,7 @@ const Login = () => {
 
   const loginSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
-      await signIn(values.email, values.password);
+      await login(values.email, values.password);
       navigate('/');
       toast({
         title: t('loginSuccess'),
@@ -80,7 +81,7 @@ const Login = () => {
 
   const registerSubmit = async (values: z.infer<typeof registerSchema>) => {
     try {
-      await signUp(values.name, values.email, values.password);
+      await registerUser(values.name, values.email, values.password, 'leader');
       navigate('/');
       toast({
         title: t('registrationSuccess'),
