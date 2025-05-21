@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
@@ -211,7 +210,7 @@ const LeaderRequestPayment: React.FC = () => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="none" disabled>No projects found</SelectItem>
+                        <SelectItem value="no-projects" disabled>No projects found</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -228,7 +227,7 @@ const LeaderRequestPayment: React.FC = () => {
                         <SelectValue placeholder="Select a progress update" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {progressUpdates.length > 0 ? (
                           progressUpdates.map(update => (
                             <SelectItem key={update.id} value={update.id}>
@@ -236,7 +235,7 @@ const LeaderRequestPayment: React.FC = () => {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="none" disabled>No updates found</SelectItem>
+                          <SelectItem value="no-updates" disabled>No updates found</SelectItem>
                         )}
                       </SelectContent>
                     </Select>
