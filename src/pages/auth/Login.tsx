@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserRole } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Github } from 'lucide-react';
+import { LogIn, Mail, Lock, GithubIcon } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -281,7 +281,7 @@ const Login = () => {
                   className="w-full"
                   onClick={handleGoogleLogin}
                 >
-                  <Github className="mr-2 h-4 w-4" />
+                  <GithubIcon className="mr-2 h-4 w-4" />
                   {t('signInWith')} Google
                 </Button>
               </CardFooter>

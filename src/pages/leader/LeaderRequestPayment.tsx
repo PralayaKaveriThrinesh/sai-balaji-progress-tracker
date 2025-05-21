@@ -18,7 +18,6 @@ import { Camera, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCamera } from '@/hooks/use-camera';
 import { formatCurrency } from '@/lib/utils';
-import { v4 as uuidv4 } from 'uuid';
 
 // Import from storage for local data management
 import { 

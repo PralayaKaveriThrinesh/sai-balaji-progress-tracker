@@ -1,24 +1,66 @@
 
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './types';
+// This is now a mock implementation that doesn't connect to Supabase
+// Instead, it uses localStorage for data persistence
 
-const SUPABASE_URL = "https://ioxvwidlnkeqmetobszm.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlveHZ3aWRsbmtlcW1ldG9ic3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MTU0NTUsImV4cCI6MjA2MzI5MTQ1NX0.lv-RY-pPuavCCpKAJcZFGi-iLe3CucNHuEkQsXOyh0Y";
-
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
-export const supabase = createClient<Database>(
-  SUPABASE_URL, 
-  SUPABASE_PUBLISHABLE_KEY, 
-  {
+// Mock client for local storage operations
+const createMockClient = () => {
+  return {
     auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-    }
-  }
-);
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      signInWithPassword: () => Promise.resolve({ data: null, error: null }),
+      signOut: () => Promise.resolve({ error: null }),
+      onAuthStateChange: () => {
+        return { 
+          subscription: { 
+            unsubscribe: () => {} 
+          } 
+        };
+      }
+    },
+    from: (table: string) => {
+      return {
+        select: () => {
+          console.log(`Mock select from ${table}`);
+          return {
+            eq: () => ({
+              single: () => Promise.resolve({ data: null, error: null }),
+              maybeSingle: () => Promise.resolve({ data: null, error: null }),
+            }),
+            order: () => ({
+              limit: () => Promise.resolve({ data: [], error: null }),
+            }),
+            match: () => Promise.resolve({ data: [], error: null }),
+          };
+        },
+        insert: (data: any) => {
+          console.log(`Mock insert to ${table}`, data);
+          return Promise.resolve({ data, error: null });
+        },
+        update: (data: any) => {
+          console.log(`Mock update to ${table}`, data);
+          return {
+            eq: () => Promise.resolve({ data, error: null }),
+            match: () => Promise.resolve({ data, error: null }),
+          };
+        },
+        delete: () => {
+          return {
+            eq: () => Promise.resolve({ data: null, error: null }),
+            match: () => Promise.resolve({ data: null, error: null }),
+          };
+        },
+      };
+    },
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: { path: 'mock-path' }, error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: 'mock-url' } }),
+      }),
+    },
+  };
+};
+
+export const supabase = createMockClient();
 
 export const cleanupAuthState = () => {
   // Remove standard auth tokens
