@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/sonner';
 import { 
   Dialog, 
@@ -20,10 +18,9 @@ import { Camera, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCamera } from '@/hooks/use-camera';
 import { formatCurrency } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 
-// Temporary import from storage until we fully migrate
+// Import from storage for local data management
 import { 
   getAllProjects,
   getProgressUpdatesByProjectId,
@@ -53,40 +50,12 @@ const LeaderRequestPayment = () => {
     if (user) {
       const fetchProjects = async () => {
         try {
-          // First try to get from Supabase
-          const { data: supabaseProjects, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('leader_id', user.id);
-          
-          if (error) {
-            console.error("Error fetching projects from Supabase:", error);
-            // Fall back to local storage
-            const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
-            setProjects(userProjects);
-          } else if (supabaseProjects && supabaseProjects.length > 0) {
-            // Map Supabase projects to format expected by the app
-            const formattedProjects = supabaseProjects.map(project => ({
-              id: project.id,
-              name: project.name,
-              leaderId: project.leader_id,
-              workers: project.workers,
-              totalWork: project.total_work,
-              completedWork: project.completed_work,
-              createdAt: project.created_at
-            }));
-            setProjects(formattedProjects);
-          } else {
-            // Fall back to local storage if no projects in Supabase
-            const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
-            setProjects(userProjects);
-          }
+          // Get projects from local storage
+          const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
+          setProjects(userProjects);
           setIsLoading(false);
         } catch (err) {
           console.error("Error in fetchProjects:", err);
-          // Fall back to local storage
-          const userProjects = getAllProjects().filter(project => project.leaderId === user.id);
-          setProjects(userProjects);
           setIsLoading(false);
         }
       };
@@ -100,39 +69,11 @@ const LeaderRequestPayment = () => {
     if (selectedProject) {
       const fetchProgressUpdates = async () => {
         try {
-          // First try to get from Supabase
-          const { data: supabaseUpdates, error } = await supabase
-            .from('progress_updates')
-            .select('*')
-            .eq('project_id', selectedProject);
-          
-          if (error) {
-            console.error("Error fetching progress updates from Supabase:", error);
-            // Fall back to local storage
-            const updates = getProgressUpdatesByProjectId(selectedProject);
-            setProgressUpdates(updates);
-          } else if (supabaseUpdates && supabaseUpdates.length > 0) {
-            // Map Supabase updates to format expected by the app
-            const formattedUpdates = supabaseUpdates.map(update => ({
-              id: update.id,
-              projectId: update.project_id,
-              date: update.date,
-              completedWork: update.completed_work,
-              timeTaken: update.time_taken,
-              notes: update.notes,
-              photos: [] // We'll need to fetch photos separately
-            }));
-            setProgressUpdates(formattedUpdates);
-          } else {
-            // Fall back to local storage if no updates in Supabase
-            const updates = getProgressUpdatesByProjectId(selectedProject);
-            setProgressUpdates(updates);
-          }
-        } catch (err) {
-          console.error("Error in fetchProgressUpdates:", err);
-          // Fall back to local storage
+          // Get progress updates from local storage
           const updates = getProgressUpdatesByProjectId(selectedProject);
           setProgressUpdates(updates);
+        } catch (err) {
+          console.error("Error in fetchProgressUpdates:", err);
         }
       };
       
@@ -234,78 +175,21 @@ const LeaderRequestPayment = () => {
     }
     
     try {
-      // Generate a UUID for the payment request
-      const paymentRequestId = uuidv4();
+      // Create payment request using local storage
+      const paymentRequest = createPaymentRequest({
+        projectId: selectedProject,
+        progressUpdateId: selectedProgressUpdate !== 'none' ? selectedProgressUpdate : undefined,
+        date: new Date().toISOString(),
+        purposes: purposes,
+        status: "pending",
+        totalAmount: totalAmount
+      });
       
-      // Try to save to Supabase first
-      try {
-        // First, insert the payment request
-        const { error: requestError } = await supabase
-          .from('payment_requests')
-          .insert({
-            id: paymentRequestId,
-            project_id: selectedProject,
-            progress_update_id: selectedProgressUpdate !== 'none' ? selectedProgressUpdate : null,
-            date: new Date().toISOString(),
-            status: 'pending',
-            total_amount: totalAmount
-          });
-        
-        if (requestError) throw requestError;
-        
-        // Then insert all purposes and their images
-        for (const purpose of purposes) {
-          // Generate a UUID for the purpose
-          const purposeId = uuidv4();
-          
-          // Insert the purpose
-          const { error: purposeError } = await supabase
-            .from('payment_purposes')
-            .insert({
-              id: purposeId,
-              payment_request_id: paymentRequestId,
-              type: purpose.type,
-              amount: purpose.amount
-            });
-          
-          if (purposeError) throw purposeError;
-          
-          // Insert all images for this purpose
-          for (const image of purpose.images) {
-            const { error: imageError } = await supabase
-              .from('purpose_images')
-              .insert({
-                purpose_id: purposeId,
-                data_url: image.dataUrl,
-                timestamp: image.timestamp,
-                latitude: image.location.latitude,
-                longitude: image.location.longitude
-              });
-            
-            if (imageError) throw imageError;
-          }
-        }
-        
-        toast.success("Payment request submitted successfully to Supabase");
-      } catch (supabaseError) {
-        console.error("Supabase error:", supabaseError);
-        
-        // Fall back to local storage
-        const paymentRequest = createPaymentRequest({
-          projectId: selectedProject,
-          progressUpdateId: selectedProgressUpdate !== 'none' ? selectedProgressUpdate : undefined,
-          date: new Date().toISOString(),
-          purposes: purposes,
-          status: "pending",
-          totalAmount: totalAmount
-        });
-        
-        if (!paymentRequest) {
-          throw new Error("Failed to create payment request in local storage");
-        }
-        
-        toast.success("Payment request saved locally (Supabase unavailable)");
+      if (!paymentRequest) {
+        throw new Error("Failed to create payment request");
       }
+      
+      toast.success("Payment request submitted successfully");
       
       // Redirect after successful submission
       navigate("/leader/view-payment");

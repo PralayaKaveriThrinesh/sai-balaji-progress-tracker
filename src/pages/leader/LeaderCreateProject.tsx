@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
 import { createProject } from '@/lib/storage';
-import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   name: z.string().min(3, {
@@ -52,37 +51,17 @@ const LeaderCreateProject = () => {
     setIsSubmitting(true);
     
     try {
-      // First, try to save to Supabase
-      try {
-        const { data, error } = await supabase
-          .from('projects')
-          .insert({
-            name: values.name,
-            leader_id: user.id,
-            workers: parseInt(values.workers),
-            total_work: parseFloat(values.totalWork),
-            completed_work: 0
-          })
-          .select();
-        
-        if (error) throw error;
-        
-        toast.success("Project created successfully in Supabase");
-      } catch (supabaseError) {
-        console.error("Supabase error:", supabaseError);
-        
-        // Fall back to local storage
-        const newProject = createProject({
-          name: values.name,
-          leaderId: user.id,
-          workers: parseInt(values.workers),
-          totalWork: parseFloat(values.totalWork),
-          completedWork: 0,
-          createdAt: new Date().toISOString(),
-        });
-        
-        toast.success("Project saved locally (Supabase unavailable)");
-      }
+      // Create project in local storage
+      const newProject = createProject({
+        name: values.name,
+        leaderId: user.id,
+        workers: parseInt(values.workers),
+        totalWork: parseFloat(values.totalWork),
+        completedWork: 0,
+        createdAt: new Date().toISOString(),
+      });
+      
+      toast.success("Project created successfully");
       
       // Redirect to dashboard after short delay
       setTimeout(() => {

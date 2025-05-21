@@ -38,10 +38,10 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   // Available languages
-  const availableLanguages: { code: Language; name: string }[] = [
-    { code: 'en', name: 'English' },
-    { code: 'te', name: 'తెలుగు' }, // Telugu
-    { code: 'kn', name: 'ಕನ್ನಡ' },  // Kannada
+  const availableLanguages = [
+    { code: 'en' as Language, name: 'English' },
+    { code: 'te' as Language, name: 'తెలుగు' }, // Telugu
+    { code: 'kn' as Language, name: 'ಕನ್ನಡ' },  // Kannada
   ];
 
   // Set html lang attribute
