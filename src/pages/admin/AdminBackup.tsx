@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +21,19 @@ import { Separator } from '@/components/ui/separator';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
+// Import the type augmentation for jsPDF instead of the module
+// This fixes the "Failed to resolve import "jspdf-autotable"" error
 import 'jspdf-autotable';
+
+// Add type augmentation for the autoTable method
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => any;
+    lastAutoTable: {
+      finalY: number;
+    } | undefined;
+  }
+}
 
 interface BackupLink {
   id: string;
@@ -281,7 +292,7 @@ const AdminBackup = () => {
           new Date(p.created_at).toLocaleDateString()
         ]);
         
-        (doc as any).autoTable({
+        doc.autoTable({
           head: [['Name', 'Workers', 'Total Work', 'Completed', 'Created Date']],
           body: projectsData,
           startY: 45
@@ -292,7 +303,7 @@ const AdminBackup = () => {
       }
       
       // Add Progress Updates table
-      const progressY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : 60;
+      const progressY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 60;
       doc.setFontSize(14);
       doc.text('Progress Updates', 14, progressY);
       if (progressUpdates && progressUpdates.length > 0) {
@@ -303,7 +314,7 @@ const AdminBackup = () => {
           new Date(u.date).toLocaleDateString()
         ]);
         
-        (doc as any).autoTable({
+        doc.autoTable({
           head: [['Project ID', 'Completed Work', 'Time Taken', 'Date']],
           body: updatesData,
           startY: progressY + 5
@@ -314,7 +325,7 @@ const AdminBackup = () => {
       }
       
       // Add Payment Requests table
-      const paymentY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : 80;
+      const paymentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80;
       doc.setFontSize(14);
       doc.text('Payment Requests', 14, paymentY);
       if (paymentRequests && paymentRequests.length > 0) {
@@ -325,7 +336,7 @@ const AdminBackup = () => {
           new Date(r.date).toLocaleDateString()
         ]);
         
-        (doc as any).autoTable({
+        doc.autoTable({
           head: [['Project ID', 'Amount', 'Status', 'Date']],
           body: requestsData,
           startY: paymentY + 5
