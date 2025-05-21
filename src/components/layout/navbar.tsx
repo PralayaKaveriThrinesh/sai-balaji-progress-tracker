@@ -5,7 +5,7 @@ import { useTheme } from "@/context/theme-provider";
 import { useLanguage } from "@/context/language-context";
 import { Button } from "@/components/ui/button";
 import { 
-  Menu, Sun, Moon, ChevronDown, Language, 
+  Menu, Sun, Moon, ChevronDown, Languages, 
   User as UserIcon, 
   LogOut, Settings 
 } from "lucide-react";
@@ -131,7 +131,7 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
                 size="icon"
                 className="rounded-full"
               >
-                <Language className="h-4 w-4" />
+                <Languages className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

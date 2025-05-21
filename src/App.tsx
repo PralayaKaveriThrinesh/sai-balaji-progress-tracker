@@ -40,7 +40,7 @@ import OwnerBackup from '@/pages/owner/OwnerBackup'
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
+    <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
           <Layout>

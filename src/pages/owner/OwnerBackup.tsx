@@ -1,201 +1,128 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/auth-context';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/language-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BackupLink } from '@/lib/mock-data/backup-links';
+import backupLinksService from '@/lib/mock-data/backup-links';
+import { Card, CardContent } from '@/components/ui/card';
+import { Link, ExternalLink } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { Link as LinkIcon, Calendar, FileText } from 'lucide-react';
 import { DataViewToggle } from '@/components/shared/data-view-toggle';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-
-interface BackupLink {
-  id: string;
-  url: string;
-  description: string;
-  created_at: string;
-  created_by: string;
-}
 
 const OwnerBackup = () => {
-  const { user } = useAuth();
   const { t } = useLanguage();
   const [backupLinks, setBackupLinks] = useState<BackupLink[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
-  
-  // Fetch backup links from localStorage
-  useEffect(() => {
-    const fetchBackupLinks = async () => {
-      try {
-        setIsLoading(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Get backup links from localStorage or use demo data
-        const storedLinks = localStorage.getItem('backup_links');
-        let links = [];
-        
-        if (storedLinks) {
-          links = JSON.parse(storedLinks);
-        } else {
-          // Demo data if no links exist
-          links = [
-            {
-              id: "1",
-              url: "https://example.com/backup1",
-              description: "Weekly database backup",
-              created_at: new Date().toISOString(),
-              created_by: "admin"
-            },
-            {
-              id: "2",
-              url: "https://example.com/backup2",
-              description: "Monthly complete system backup",
-              created_at: new Date(Date.now() - 86400000).toISOString(),
-              created_by: "admin"
-            }
-          ];
-          localStorage.setItem('backup_links', JSON.stringify(links));
-        }
-        
-        setBackupLinks(links);
-      } catch (error) {
-        console.error('Error in fetchBackupLinks:', error);
-        toast.error(t('somethingWentWrong'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchBackupLinks();
-    
-    // Check for preferred view mode in localStorage
-    const savedViewMode = localStorage.getItem('backup_view_mode');
-    if (savedViewMode && (savedViewMode === 'table' || savedViewMode === 'card')) {
-      setViewMode(savedViewMode);
-    }
-  }, [t]);
-  
-  // Save view mode preference
-  useEffect(() => {
-    localStorage.setItem('backup_view_mode', viewMode);
-  }, [viewMode]);
-  
-  const formatDate = (dateString: string) => {
+  const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+
+  const fetchBackupLinks = async () => {
+    setLoading(true);
     try {
-      const date = new Date(dateString);
-      return date.toLocaleString();
-    } catch (e) {
-      return dateString;
+      const { data, error } = await backupLinksService.getLinks();
+      if (error) {
+        toast.error('Failed to load backup links');
+        return;
+      }
+      if (data) {
+        setBackupLinks(data);
+      }
+    } catch (error) {
+      console.error('Error fetching backup links:', error);
+      toast.error('Failed to load backup links');
+    } finally {
+      setLoading(false);
     }
   };
-  
+
+  useEffect(() => {
+    fetchBackupLinks();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  };
+
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">{t('backupLinks')}</h1>
-          <p className="text-muted-foreground">
-            {t('accessBackupLinks')}
-          </p>
-        </div>
-        
+    <div className="container mx-auto p-4 pt-16">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">{t('backupLinks')}</h1>
         <DataViewToggle 
-          viewMode={viewMode}
-          setViewMode={setViewMode}
+          viewMode={viewMode} 
+          setViewMode={setViewMode} 
         />
       </div>
-      
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>{t('availableBackupLinks')}</CardTitle>
-          <CardDescription>
-            {t('backupLinksAdminProvided')}
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : backupLinks.length > 0 ? (
-            viewMode === 'table' ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('link')}</TableHead>
-                    <TableHead>{t('description')}</TableHead>
-                    <TableHead>{t('dateAdded')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {backupLinks.map((link) => (
-                    <TableRow key={link.id}>
-                      <TableCell>
-                        <a 
-                          href={link.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center"
-                        >
-                          <LinkIcon className="h-4 w-4 mr-2" />
-                          {link.url}
-                        </a>
-                      </TableCell>
-                      <TableCell>{link.description}</TableCell>
-                      <TableCell>{formatDate(link.created_at)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="space-y-4">
-                {backupLinks.map((link) => (
-                  <div
-                    key={link.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg border gap-4"
+
+      {loading ? (
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : backupLinks.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center justify-center min-h-[200px] text-center">
+            <Link className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium">{t('noBackupLinks')}</h3>
+            <p className="text-muted-foreground mt-2">{t('adminAddBackupLinks')}</p>
+          </CardContent>
+        </Card>
+      ) : viewMode === 'table' ? (
+        <div className="rounded-md border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="h-10 px-4 text-left font-medium">URL</th>
+                <th className="h-10 px-4 text-left font-medium">Description</th>
+                <th className="h-10 px-4 text-left font-medium">Created At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {backupLinks.map((link) => (
+                <tr key={link.id} className="border-b hover:bg-muted/50">
+                  <td className="p-4 align-middle max-w-[300px] truncate">
+                    <a 
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center text-blue-600 hover:underline"
+                    >
+                      {link.url}
+                      <ExternalLink className="ml-1 h-3 w-3" />
+                    </a>
+                  </td>
+                  <td className="p-4 align-middle max-w-[400px] truncate">{link.description || '-'}</td>
+                  <td className="p-4 align-middle">{formatDate(link.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {backupLinks.map((link) => (
+            <Card key={link.id} className="overflow-hidden">
+              <CardContent className="p-6 flex flex-col space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Link className="h-4 w-4 text-blue-600 shrink-0" />
+                  <a 
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline truncate font-medium"
                   >
-                    <div>
-                      <a 
-                        href={link.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center font-medium mb-1"
-                      >
-                        <LinkIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span className="truncate">{link.url}</span>
-                      </a>
-                      {link.description && (
-                        <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2">
-                          <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <p>{link.description}</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center text-xs text-muted-foreground sm:text-right">
-                      <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                      {formatDate(link.created_at)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>{t('noBackupLinks')}</p>
-              <p className="text-sm mt-2">{t('adminAddBackupLinks')}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    {link.url}
+                    <ExternalLink className="ml-1 h-3 w-3 inline" />
+                  </a>
+                </div>
+                <div className="text-sm text-muted-foreground mt-2">
+                  {link.description || 'No description provided'}
+                </div>
+                <div className="text-xs text-muted-foreground mt-4">
+                  Added: {formatDate(link.created_at)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

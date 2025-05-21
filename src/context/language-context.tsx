@@ -38,7 +38,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   // Available languages
-  const availableLanguages = [
+  const availableLanguages: { code: Language; name: string }[] = [
     { code: 'en', name: 'English' },
     { code: 'te', name: 'తెలుగు' }, // Telugu
     { code: 'kn', name: 'ಕನ್ನಡ' },  // Kannada
