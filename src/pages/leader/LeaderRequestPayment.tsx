@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/sonner';
@@ -6,14 +7,13 @@ import { useLanguage } from '@/context/language-context';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon } from "@radix-ui/react-icons"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { Camera } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Camera, Calendar as CalendarIcon } from 'lucide-react';
 import { takePhoto } from '@/lib/camera';
 
 const LeaderRequestPayment = () => {
@@ -75,7 +75,7 @@ const LeaderRequestPayment = () => {
     }
   };
 
-  // Fix: Handle camera results with proper null checks
+  // Handle camera capture with proper null checks
   const handleCameraCapture = async (purpose: PaymentPurpose) => {
     try {
       const result = await takePhoto();
@@ -110,7 +110,7 @@ const LeaderRequestPayment = () => {
     }
   };
 
-  // Fix: Implement the missing handler functions
+  // Handler functions
   const handleRemovePurpose = (index: number) => {
     setPurposes(prevPurposes => prevPurposes.filter((_, i) => i !== index));
   };
