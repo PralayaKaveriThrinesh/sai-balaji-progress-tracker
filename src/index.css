@@ -362,8 +362,10 @@ body, .card, .btn, .nav-button {
   @apply bg-card text-card-foreground border-border;
 }
 
-.dark .bg-muted {
-  @apply bg-muted text-muted-foreground;
+/* Fix for the circular dependency */
+.dark .muted-element {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
 }
 
 /* Animation for swipe out */
