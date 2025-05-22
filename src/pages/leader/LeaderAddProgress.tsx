@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,11 +11,41 @@ import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
 import { getProjectsByLeaderId, getAllVehicles, addProgressUpdate, updateProject } from '@/lib/storage';
 import { Project, Vehicle, PhotoWithMetadata, ProgressUpdate } from '@/lib/types';
-import { PhotoPreview } from '@/components/shared/photo-preview';
-import { DocumentUpload, DocumentFile } from '@/components/shared/document-upload';
 import { Progress } from '@/components/ui/progress';
-import { Camera, Clock, Upload, Percent, X, File } from 'lucide-react';
+import { Clock, Percent } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Simple component to display progress photos
+const ImageDisplay = ({ images, onRemove }) => {
+  if (!images || images.length === 0) return null;
+  
+  return (
+    <div className="mt-4">
+      <h3 className="font-medium mb-2">Progress Photos:</h3>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {images.map((image, index) => (
+          <div key={index} className="relative">
+            <img
+              src={image.dataUrl}
+              alt={`Progress photo ${index + 1}`}
+              className="w-full h-24 object-cover rounded"
+            />
+            <button
+              onClick={() => onRemove(index)}
+              className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+              type="button"
+            >
+              ×
+            </button>
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
+              {new Date(image.timestamp).toLocaleTimeString()}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const LeaderAddProgress = () => {
   const { user } = useAuth();
@@ -32,7 +63,6 @@ const LeaderAddProgress = () => {
   const [startMeterReading, setStartMeterReading] = useState<PhotoWithMetadata | null>(null);
   const [endMeterReading, setEndMeterReading] = useState<PhotoWithMetadata | null>(null);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
-  const [documents, setDocuments] = useState<DocumentFile[]>([]);
   
   useEffect(() => {
     if (user) {
@@ -56,46 +86,13 @@ const LeaderAddProgress = () => {
     }
   }, [selectedProject, completedWork, projects]);
   
-  const handlePhotoCapture = (photo: PhotoWithMetadata) => {
-    setPhotos(prev => [...prev, photo]);
-  };
-  
-  const handleStartMeterCapture = (photo: PhotoWithMetadata) => {
-    setStartMeterReading(photo);
-  };
-  
-  const handleEndMeterCapture = (photo: PhotoWithMetadata) => {
-    setEndMeterReading(photo);
-  };
-  
   const handleRemovePhoto = (index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
-  };
-  
-  const handleDocumentUpload = (document: DocumentFile) => {
-    setDocuments(prev => [...prev, document]);
-  };
-  
-  const handleRemoveDocument = (id: string) => {
-    setDocuments(prev => prev.filter(doc => doc.id !== id));
-  };
-  
-  const isToday = (dateString: string) => {
-    const today = new Date();
-    const date = new Date(dateString);
-    return date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear();
   };
   
   const handleSubmit = () => {
     if (!selectedProject) {
       toast.error("Please select a project");
-      return;
-    }
-    
-    if (photos.length === 0) {
-      toast.error("Please capture at least one progress photo");
       return;
     }
     
@@ -116,12 +113,12 @@ const LeaderAddProgress = () => {
       }
       
       if (!startMeterReading) {
-        toast.error("Please capture start meter reading");
+        toast.error("Please upload start meter reading image");
         return;
       }
       
       if (!endMeterReading) {
-        toast.error("Please capture end meter reading");
+        toast.error("Please upload end meter reading image");
         return;
       }
     }
@@ -135,7 +132,7 @@ const LeaderAddProgress = () => {
     setIsSubmitting(true);
     
     try {
-      // Create progress update with documents
+      // Create progress update
       const progressData: Omit<ProgressUpdate, 'id'> = {
         projectId: selectedProject,
         date: new Date().toISOString(),
@@ -146,7 +143,7 @@ const LeaderAddProgress = () => {
         vehicleId: useVehicle ? selectedVehicle : undefined,
         startMeterReading: useVehicle ? startMeterReading : undefined,
         endMeterReading: useVehicle ? endMeterReading : undefined,
-        documents: documents, // Add the documents field
+        documents: [] // Empty documents array
       };
       
       addProgressUpdate(progressData);
@@ -181,7 +178,7 @@ const LeaderAddProgress = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-4xl font-bold mb-6">Add Progress</h1>
       <p className="text-muted-foreground mb-8">
-        Track work progress and capture photos for {today}
+        Track work progress for {today}
       </p>
       
       <div className="grid gap-6 md:grid-cols-2">
@@ -313,79 +310,44 @@ const LeaderAddProgress = () => {
           <CardHeader>
             <CardTitle>Documentation</CardTitle>
             <CardDescription>
-              Take photos and upload documents to track your progress
+              Upload images to track your progress
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Tabs defaultValue="photos" className="w-full">
-              <TabsList className="grid grid-cols-2 mb-4">
-                <TabsTrigger value="photos">Photos</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-1 mb-4">
+                <TabsTrigger value="photos">Progress Images</TabsTrigger>
               </TabsList>
               
               <TabsContent value="photos" className="space-y-4">
-                <PhotoPreview 
-                  onCapture={handlePhotoCapture} 
-                  buttonText="Capture Progress Photo"
-                />
+                <div className="flex justify-center mb-6">
+                  <Button onClick={() => {
+                    // Use standard file input for now
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          const photoData: PhotoWithMetadata = {
+                            dataUrl: reader.result as string,
+                            timestamp: new Date().toISOString(),
+                            location: { latitude: 0, longitude: 0 }
+                          };
+                          setPhotos(prev => [...prev, photoData]);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    };
+                    input.click();
+                  }}>
+                    Upload Progress Image
+                  </Button>
+                </div>
                 
-                {photos.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="font-medium mb-2">Captured Photos:</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {photos.map((photo, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={photo.dataUrl}
-                            alt={`Progress photo ${index + 1}`}
-                            className="w-full h-24 object-cover rounded"
-                          />
-                          <button
-                            onClick={() => handleRemovePhoto(index)}
-                            className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                            type="button"
-                          >
-                            <X size={16} />
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
-                            {new Date(photo.timestamp).toLocaleTimeString()}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="documents" className="space-y-4">
-                <DocumentUpload onUpload={handleDocumentUpload} />
-                
-                {documents.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="font-medium mb-2">Uploaded Documents:</h3>
-                    <div className="space-y-2">
-                      {documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center p-3 bg-muted/20 rounded-lg border border-border">
-                          <File className="h-6 w-6 mr-3 text-primary" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{doc.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(doc.timestamp).toLocaleString()}
-                            </p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="ml-2" 
-                            onClick={() => handleRemoveDocument(doc.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <ImageDisplay images={photos} onRemove={handleRemovePhoto} />
               </TabsContent>
             </Tabs>
             
@@ -394,10 +356,33 @@ const LeaderAddProgress = () => {
                 <div>
                   <h3 className="font-medium mb-2">Vehicle Start Meter Reading:</h3>
                   {!startMeterReading ? (
-                    <PhotoPreview 
-                      onCapture={handleStartMeterCapture} 
-                      buttonText="Capture Start Reading"
-                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const photoData: PhotoWithMetadata = {
+                                dataUrl: reader.result as string,
+                                timestamp: new Date().toISOString(),
+                                location: { latitude: 0, longitude: 0 }
+                              };
+                              setStartMeterReading(photoData);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                      className="w-full h-32 flex flex-col items-center justify-center"
+                    >
+                      <span>Upload Start Meter Reading</span>
+                    </Button>
                   ) : (
                     <div className="relative">
                       <img
@@ -410,7 +395,7 @@ const LeaderAddProgress = () => {
                         className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                         type="button"
                       >
-                        <X size={16} />
+                        ×
                       </button>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
                         {new Date(startMeterReading.timestamp).toLocaleTimeString()}
@@ -422,10 +407,33 @@ const LeaderAddProgress = () => {
                 <div>
                   <h3 className="font-medium mb-2">Vehicle End Meter Reading:</h3>
                   {!endMeterReading ? (
-                    <PhotoPreview 
-                      onCapture={handleEndMeterCapture} 
-                      buttonText="Capture End Reading"
-                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const photoData: PhotoWithMetadata = {
+                                dataUrl: reader.result as string,
+                                timestamp: new Date().toISOString(),
+                                location: { latitude: 0, longitude: 0 }
+                              };
+                              setEndMeterReading(photoData);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                      className="w-full h-32 flex flex-col items-center justify-center"
+                    >
+                      <span>Upload End Meter Reading</span>
+                    </Button>
                   ) : (
                     <div className="relative">
                       <img
@@ -438,7 +446,7 @@ const LeaderAddProgress = () => {
                         className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                         type="button"
                       >
-                        <X size={16} />
+                        ×
                       </button>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1">
                         {new Date(endMeterReading.timestamp).toLocaleTimeString()}

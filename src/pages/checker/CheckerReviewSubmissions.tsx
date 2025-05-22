@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +11,6 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import { PhotoPreview } from '@/components/shared/photo-preview';
 import { MapView } from '@/components/shared/map-view';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
