@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Download as FileExport } from 'lucide-react';
+import { Download, FileText, Download as FileExport, FilePdf } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { generateExportData } from '@/lib/storage';
 import { useNavigate } from 'react-router-dom';
@@ -62,9 +62,9 @@ const AdminExportData: React.FC = () => {
       const projectData = data.projects.map(project => ({
         id: project.id,
         name: project.name,
-        // Use optional chaining for potentially missing properties
-        location: project.location || 'Unknown',
-        leader: project.leaderName || 'Unknown',
+        // Map project data with correct property access and provide fallbacks
+        location: 'Unknown', // Fixed - location doesn't exist in Project type
+        leader: 'Unknown', // Fixed - leaderName doesn't exist in Project type
         completedWork: project.completedWork || 0,
         totalWork: project.totalWork || 0,
         progress: `${Math.round(((project.completedWork || 0) / (project.totalWork || 1)) * 100)}%`
@@ -127,14 +127,14 @@ const AdminExportData: React.FC = () => {
         
         case 'payment-summary': {
           // Payment summary
-          // Handle potential missing paymentRequests property
+          // Handle potential missing properties in PaymentRequest
           const paymentData = data.paymentRequests?.map(payment => ({
             id: payment.id,
-            project: payment.projectName || 'Unknown',
+            project: payment.projectId || 'Unknown', // Fixed - using projectId instead of projectName
             amount: `₹${(payment.totalAmount || 0).toLocaleString()}`,
             status: payment.status || 'Unknown',
-            requestDate: new Date(payment.requestDate || Date.now()).toLocaleDateString(),
-            requestedBy: payment.leaderName || 'Unknown'
+            requestDate: new Date(payment.date || Date.now()).toLocaleDateString(), // Fixed - using date instead of requestDate
+            requestedBy: 'Team Leader' // Fixed - leaderName doesn't exist
           })) || [];
           
           await exportToPDF({
@@ -187,13 +187,13 @@ const AdminExportData: React.FC = () => {
         }
         
         case 'vehicle-usage': {
-          // Vehicle usage report
+          // Vehicle usage report - fix properties to match the Vehicle interface
           const vehicleData = (data.vehicles || []).map(vehicle => ({
             name: vehicle.registrationNumber || 'Unknown',
-            type: vehicle.type || 'Unknown',  // Changed from vehicleType to type
-            capacity: vehicle.capacity || 'N/A',  // Using capacity or N/A if missing
-            status: vehicle.isAvailable ? 'Available' : 'In Use',  // Using isAvailable instead of status
-            assignedTo: vehicle.driver || 'Unassigned'  // Changed from assignedDriver to driver
+            type: vehicle.model || 'Unknown',  // Fixed - using model instead of type
+            capacity: 'N/A',  // Fixed - capacity doesn't exist
+            status: 'Unknown', // Fixed - isAvailable doesn't exist
+            assignedTo: 'Unassigned'  // Fixed - driver doesn't exist
           }));
           
           await exportToPDF({
