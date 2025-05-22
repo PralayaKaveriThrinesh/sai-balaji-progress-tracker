@@ -3,53 +3,57 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/context/language-context';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <h1 className="text-4xl font-bold mb-8 gradient-text-animated">Welcome to Sai Balaji Progress Tracker</h1>
+      <h1 className="text-4xl font-bold mb-8 gradient-text-animated">
+        {t('app.name')}
+      </h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card className="card-glow card-gradient-1">
           <CardHeader>
-            <CardTitle>Project Management</CardTitle>
+            <CardTitle>{t('app.navigation.projects')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Manage your ongoing projects and track their progress efficiently.</p>
-            <Button onClick={() => navigate('/leader/create-project')}>Create Project</Button>
+            <p className="mb-4">{t('index.projectManagementDescription')}</p>
+            <Button onClick={() => navigate('/leader/create-project')}>{t('app.navigation.createProject')}</Button>
           </CardContent>
         </Card>
         
         <Card className="card-glow card-gradient-2">
           <CardHeader>
-            <CardTitle>Progress Tracking</CardTitle>
+            <CardTitle>{t('app.navigation.viewProgress')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Track daily progress and monitor completion status of various tasks.</p>
-            <Button onClick={() => navigate('/leader/add-progress')}>Add Progress</Button>
+            <p className="mb-4">{t('index.progressTrackingDescription')}</p>
+            <Button onClick={() => navigate('/leader/add-progress')}>{t('app.navigation.addProgress')}</Button>
           </CardContent>
         </Card>
         
         <Card className="card-glow card-gradient-3">
           <CardHeader>
-            <CardTitle>Payments</CardTitle>
+            <CardTitle>{t('app.navigation.requestPayment')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Manage payment requests and view payment history.</p>
-            <Button onClick={() => navigate('/leader/request-payment')}>Request Payment</Button>
+            <p className="mb-4">{t('index.paymentsDescription')}</p>
+            <Button onClick={() => navigate('/leader/request-payment')}>{t('app.navigation.requestPayment')}</Button>
           </CardContent>
         </Card>
       </div>
       
       <div className="bg-card p-6 rounded-lg shadow-md border border-border/40">
-        <h2 className="text-2xl font-bold mb-4">Getting Started</h2>
+        <h2 className="text-2xl font-bold mb-4">{t('index.gettingStarted')}</h2>
         <ol className="list-decimal list-inside space-y-2 ml-4">
-          <li>Create a new project from the Projects menu</li>
-          <li>Add progress updates daily to track work completed</li>
-          <li>Submit payment requests as milestones are completed</li>
-          <li>Monitor project statistics and performance</li>
+          <li>{t('index.step1')}</li>
+          <li>{t('index.step2')}</li>
+          <li>{t('index.step3')}</li>
+          <li>{t('index.step4')}</li>
         </ol>
       </div>
     </div>

@@ -68,5 +68,15 @@
       "pendingPayments": "Pending Payments",
       "recentActivity": "Recent Activity"
     }
+  },
+  "index": {
+    "projectManagementDescription": "Manage your ongoing projects and track their progress efficiently.",
+    "progressTrackingDescription": "Track daily progress and monitor completion status of various tasks.",
+    "paymentsDescription": "Manage payment requests and view payment history.",
+    "gettingStarted": "Getting Started",
+    "step1": "Create a new project from the Projects menu",
+    "step2": "Add progress updates daily to track work completed",
+    "step3": "Submit payment requests as milestones are completed",
+    "step4": "Monitor project statistics and performance"
   }
 }
