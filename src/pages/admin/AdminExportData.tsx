@@ -162,7 +162,7 @@ const AdminExportData: React.FC = () => {
     }
   };
 
-  // Function to convert Word to PDF
+  // Function to convert Word to PDF - Fixed the type issue here
   const handleWordToPDF = async () => {
     try {
       setLoading(prev => ({ ...prev, pdf: true }));
@@ -174,16 +174,21 @@ const AdminExportData: React.FC = () => {
       // Get first project for demo
       const firstProject = data.projects[0] || {} as Project;
       
-      // Generate a Word document
+      // Generate a Word document - Update the type handling here
       const docxBlob = await generateProjectReport(
         firstProject, 
         data.progressUpdates.filter(p => p.projectId === firstProject.id), 
         data.paymentRequests.filter(p => p.projectId === firstProject.id)
       );
       
-      // Convert the Word blob to a PDF
+      // Fix: We'll create a proper Blob from the returned data
+      // instead of trying to use it directly as a File object
       const formData = new FormData();
-      formData.append('file', docxBlob, 'project_report.docx');
+      
+      // If docxBlob is already a Blob, use it directly
+      // If not, create a new Blob from it
+      const fileBlob = new Blob([docxBlob], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      formData.append('file', fileBlob, 'project_report.docx');
       
       // Since we can't directly convert from Word to PDF in the browser,
       // we'll use our PDF generation directly from the same data
