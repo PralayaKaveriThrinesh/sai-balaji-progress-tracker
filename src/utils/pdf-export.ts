@@ -1,6 +1,14 @@
 
-import PDFDocument from 'pdfkit';
-import blobStream from 'blob-stream';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { jsPDF as JsPDFType } from 'jspdf';
+
+// Add type definitions for jspdf-autotable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 interface PdfExportOptions {
   title: string;
@@ -25,134 +33,78 @@ export const exportToPDF = ({
   showHeaders = true,
   orientation = 'portrait',
 }: PdfExportOptions): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    try {
-      // Create a new PDF document
-      const doc = new PDFDocument({
-        margin: 50,
-        size: 'A4',
-        layout: orientation,
-        info: {
-          Title: title,
-          Author: 'Saibalaji App',
-          Subject: 'Data Export',
-          Keywords: 'export, data, statistics',
-        },
-      });
-
-      // Set up the document stream
-      const stream = doc.pipe(blobStream());
-
-      // Add title
-      doc.fontSize(24).font('Helvetica-Bold').text(title, { align: 'center' });
-      doc.moveDown();
-
-      // Add date
-      const currentDate = new Date().toLocaleDateString();
-      doc.fontSize(12).font('Helvetica').text(`Generated on: ${currentDate}`, { align: 'center' });
-      doc.moveDown();
-
-      // Add description if provided
-      if (description) {
-        doc.fontSize(14).font('Helvetica').text(description);
-        doc.moveDown(1.5);
-      } else {
-        doc.moveDown(1);
-      }
-
-      // Calculate table dimensions
-      const pageWidth = orientation === 'landscape' ? 770 : 520;
-      const totalWidth = columns.reduce((acc, col) => acc + (col.width || 100), 0);
-      const scaleFactor = Math.min(1, pageWidth / totalWidth);
-      
-      // Headers
-      if (showHeaders) {
-        // Draw header backgrounds
-        doc.fillColor('#f3f4f6').rect(50, doc.y, pageWidth - 100, 30).fill();
-        doc.fillColor('#000');
-        
-        // Draw header text
-        let xPos = 50;
-        columns.forEach(column => {
-          const width = (column.width || 100) * scaleFactor;
-          doc.font('Helvetica-Bold')
-             .fontSize(12)
-             .text(column.header, xPos + 5, doc.y + 10, {
-                width: width - 10,
-                align: 'left'
-              });
-          xPos += width;
-        });
-        doc.moveDown(2);
-      }
-
-      // Draw rows
-      data.forEach((row, rowIndex) => {
-        const y = doc.y;
-        
-        // Draw zebra striping
-        if (rowIndex % 2 === 1) {
-          doc.fillColor('#f9fafb').rect(50, y, pageWidth - 100, 25).fill();
-          doc.fillColor('#000');
-        }
-        
-        // Draw row content
-        let xPos = 50;
-        columns.forEach(column => {
-          const width = (column.width || 100) * scaleFactor;
-          const value = row[column.key];
-          const displayValue = value !== undefined && value !== null ? String(value) : '';
-          
-          doc.font('Helvetica')
-             .fontSize(10)
-             .text(displayValue, xPos + 5, y + 5, {
-                width: width - 10,
-                align: 'left'
-              });
-          xPos += width;
-        });
-        doc.moveDown(1.5);
-        
-        // Add new page if running out of space
-        if (doc.y > doc.page.height - 100) {
-          doc.addPage();
-        }
-      });
-
-      // Add page numbers
-      const pageCount = doc.bufferedPageRange().count;
-      for (let i = 0; i < pageCount; i++) {
-        doc.switchToPage(i);
-        doc.fontSize(10).text(
-          `Page ${i + 1} of ${pageCount}`,
-          50,
-          doc.page.height - 50,
-          { align: 'center' }
-        );
-      }
-
-      // Finalize the PDF
-      doc.end();
-
-      // When the stream is done, create a blob and download
-      stream.on('finish', () => {
-        const blob = stream.toBlob('application/pdf');
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        resolve();
-      });
-
-      stream.on('error', (err) => {
-        reject(err);
-      });
-    } catch (error) {
-      reject(error);
+  return new Promise((resolve) => {
+    // Create a new PDF document
+    const doc = new jsPDF({
+      orientation: orientation,
+      unit: 'mm',
+      format: 'a4',
+    });
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+    
+    // Add date
+    const currentDate = new Date().toLocaleDateString();
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${currentDate}`, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+    
+    // Add description if provided
+    let yPos = 30;
+    if (description) {
+      doc.setFontSize(12);
+      doc.text(description, 14, yPos);
+      yPos += 10;
     }
+    
+    // Prepare table data
+    const tableHeaders = columns.map(column => column.header);
+    const tableBody = data.map(row => 
+      columns.map(column => {
+        const value = row[column.key];
+        return value !== undefined && value !== null ? String(value) : '';
+      })
+    );
+    
+    // Add table
+    doc.autoTable({
+      head: showHeaders ? [tableHeaders] : [],
+      body: tableBody,
+      startY: yPos,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [243, 244, 246],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251]
+      },
+      margin: { top: 10 },
+    });
+    
+    // Add page numbers
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+    
+    // Save and download the PDF
+    doc.save(fileName);
+    
+    resolve();
   });
 };
 
