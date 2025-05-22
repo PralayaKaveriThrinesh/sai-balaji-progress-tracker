@@ -1,6 +1,7 @@
 
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import { ProgressUpdate, PaymentRequest } from '@/lib/types';
 
 // Add type definitions for jspdf-autotable
 declare module 'jspdf' {
@@ -133,8 +134,8 @@ export const convertChartDataForPdf = (
 // Generate a comprehensive PDF report for a project
 export const generateProjectPdfReport = async (
   project: any,
-  progress: any[] = [],
-  payments: any[] = []
+  progress: ProgressUpdate[] = [],
+  payments: PaymentRequest[] = []
 ) => {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -180,8 +181,8 @@ export const generateProjectPdfReport = async (
       head: [['Date', 'Distance', 'Location', 'Notes']],
       body: progress.map(p => [
         new Date(p.date).toLocaleDateString(),
-        `${p.distance || 0} m`,
-        p.location || 'N/A',
+        `${p.completedWork || 0} m`,
+        'N/A',
         p.notes || ''
       ]),
       theme: 'striped'
@@ -201,9 +202,9 @@ export const generateProjectPdfReport = async (
       head: [['Date', 'Amount', 'Status', 'Notes']],
       body: payments.map(p => [
         new Date(p.date).toLocaleDateString(),
-        `₹${p.amount.toLocaleString()}`,
+        `₹${p.totalAmount.toLocaleString()}`,
         p.status,
-        p.notes || ''
+        ''
       ]),
       theme: 'striped'
     });

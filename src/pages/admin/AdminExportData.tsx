@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, FilePdf, Printer } from 'lucide-react';
+import { FileText, Download, FileOutput, Printer } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { generateExportData } from '@/lib/storage';
 import { useNavigate } from 'react-router-dom';
@@ -73,17 +73,17 @@ const AdminExportData: React.FC = () => {
       const firstProject = data.projects[0] || {};
       
       // Generate sample progress data for the project
-      const progressEntries = (data.progressEntries || [])
+      const progressUpdates = data.progressUpdates 
         .filter(entry => entry.projectId === firstProject.id)
         .slice(0, 5); // Limit to 5 entries
         
       // Generate sample payment data for the project
-      const paymentRequests = (data.paymentRequests || [])
+      const paymentRequests = data.paymentRequests
         .filter(payment => payment.projectId === firstProject.id)
         .slice(0, 5); // Limit to 5 entries
       
       // Generate PDF report
-      const doc = await generateProjectPdfReport(firstProject, progressEntries, paymentRequests);
+      const doc = await generateProjectPdfReport(firstProject, progressUpdates, paymentRequests);
       
       // Save the PDF
       doc.save(`project_report_${firstProject.id}_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -172,7 +172,7 @@ const AdminExportData: React.FC = () => {
               {t("app.reports.exportPDFDetails")}
             </p>
             <Button onClick={handleExportPDF} className="w-full" variant="outline">
-              <FilePdf className="mr-2 h-4 w-4" /> {t("app.reports.exportPDF")}
+              <FileOutput className="mr-2 h-4 w-4" /> {t("app.reports.exportPDF")}
             </Button>
           </CardContent>
         </Card>
