@@ -30,8 +30,8 @@ export default function Login() {
     setLoading(true);
     
     try {
-      // Fix: Remove the second argument from login call
-      await login(email);
+      // Pass email and password to login
+      await login(email, password);
       toast.success(t("app.auth.loginSuccess"));
       navigate('/');
     } catch (error) {

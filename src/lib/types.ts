@@ -76,7 +76,7 @@ export interface ProgressUpdate {
   startMeterReading?: PhotoWithMetadata;
   endMeterReading?: PhotoWithMetadata;
   documents?: DocumentFile[];
-  location?: Location; // Add location property
+  location?: Location; // Location property is now properly defined
 }
 
 export interface PaymentRequest {
@@ -95,7 +95,7 @@ export interface PaymentPurpose {
   type: "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
   amount: number;
   images: PhotoWithMetadata[];
-  remarks?: string; // Add remarks property
+  remarks?: string; // Properly define remarks as optional property
 }
 
 export interface CorrectionRequest {

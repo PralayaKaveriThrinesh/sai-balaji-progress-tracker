@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/sonner';
 import { Plus, Trash2, Upload, X, Camera } from 'lucide-react';
 import { getProjectsByLeaderId, getProgressUpdatesByProjectId, createPaymentRequest } from '@/lib/storage';
-import { Project, ProgressUpdate, PaymentPurpose, PaymentRequest } from '@/lib/types';
+import { Project, ProgressUpdate, PaymentPurpose, PaymentRequest, PhotoWithMetadata, Location } from '@/lib/types';
 import { useCamera } from '@/hooks/use-camera';
 
 type PaymentPurposeType = "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
@@ -25,7 +25,7 @@ interface PaymentForm {
     type: PaymentPurposeType;
     amount: number;
     remarks?: string;
-    images: { dataUrl: string; timestamp: string; location: { latitude: number; longitude: number } }[];
+    images: PhotoWithMetadata[];
   }[];
 }
 
@@ -87,43 +87,6 @@ const LeaderRequestPayment: React.FC = () => {
 
   const handleUpdateChange = (updateId: string) => {
     setFormValues(prev => ({ ...prev, progressUpdateId: updateId }));
-  };
-
-  const handlePurposeChange = (index: number, field: keyof PaymentPurpose | 'remarks', value: any) => {
-    setFormValues(prev => {
-      const newPurposes = [...prev.purposes];
-      if (field === 'remarks') {
-        newPurposes[index] = { 
-          ...newPurposes[index], 
-          remarks: value 
-        };
-      } else {
-        newPurposes[index] = { 
-          ...newPurposes[index], 
-          [field]: value 
-        };
-      }
-      return { ...prev, purposes: newPurposes };
-    });
-  };
-
-  const handleAddPurpose = () => {
-    setFormValues(prev => ({
-      ...prev,
-      purposes: [...prev.purposes, { type: "labour", amount: 0, images: [] }]
-    }));
-  };
-
-  const handleRemovePurpose = (index: number) => {
-    if (formValues.purposes.length <= 1) {
-      toast.error(t("app.payments.minOnePurpose"));
-      return;
-    }
-
-    setFormValues(prev => ({
-      ...prev,
-      purposes: prev.purposes.filter((_, i) => i !== index)
-    }));
   };
 
   // New function to handle image upload
@@ -191,7 +154,7 @@ const LeaderRequestPayment: React.FC = () => {
   const handleCaptureImage = async (purposeIndex: number) => {
     try {
       const result = await captureImage();
-      if (result && typeof result !== 'string') {
+      if (result && typeof result === 'object' && 'dataUrl' in result) {
         setFormValues(prev => {
           const newPurposes = [...prev.purposes];
           newPurposes[purposeIndex].images = [

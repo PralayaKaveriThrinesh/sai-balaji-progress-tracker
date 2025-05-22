@@ -7,9 +7,9 @@ import { toast } from '@/components/ui/sonner';
 
 interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
+  login: (email: string, password?: string) => void;
   logout: () => void;
-  register: (name: string, email: string, password: string, role: UserRole) => boolean;
+  register: (name: string, email: string, password: string, phone: string) => boolean;
   isAuthenticated: boolean;
   role: UserRole | null;
 }
@@ -37,13 +37,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = (user: User) => {
-    setUser(user);
-    setCurrentUser(user);
+  // Updated login function to accept email (and optional password)
+  const login = (email: string, password?: string) => {
+    // Get the user from storage based on email
+    // This assumes your storage has a function to find users by email
+    // For a real app, you would make an API call here
+    const foundUser = { 
+      id: '1', 
+      name: 'User', 
+      email: email, 
+      password: password || '', 
+      role: 'leader' as UserRole 
+    };
+    
+    setUser(foundUser);
+    setCurrentUser(foundUser);
     
     // Redirect based on user role
     let redirectPath = '/';
-    switch(user.role) {
+    switch(foundUser.role) {
       case 'leader':
         redirectPath = '/leader';
         break;
@@ -58,8 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         break;
     }
     
-    toast.success(`Welcome, ${user.name}`, {
-      description: `You are logged in as ${user.role}`,
+    toast.success(`Welcome, ${foundUser.name}`, {
+      description: `You are logged in as ${foundUser.role}`,
     });
     
     navigate(redirectPath);
@@ -72,9 +84,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigate('/login');
   };
   
-  const register = (name: string, email: string, password: string, role: UserRole): boolean => {
-    // Try registering the user
-    const result = registerUser(name, email, password, role);
+  const register = (name: string, email: string, password: string, phone: string): boolean => {
+    // Try registering the user - we're assigning a default role of 'leader'
+    const result = registerUser(name, email, password, 'leader');
     
     if (result.success) {
       toast.success("Registration successful!", {

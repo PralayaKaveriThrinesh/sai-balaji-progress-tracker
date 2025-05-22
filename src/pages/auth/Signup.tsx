@@ -11,8 +11,8 @@ import { toast } from '@/components/ui/sonner';
 import { AuthLogo } from '@/components/auth/AuthLogo';
 
 export default function Signup() {
-  // Fix: Use register instead of signup since that's what's available in AuthContextType
-  const { register: signup } = useAuth();
+  // Use register from auth context
+  const { register } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   
@@ -48,7 +48,8 @@ export default function Signup() {
     setLoading(true);
     
     try {
-      await signup(formData.email, formData.password, formData.name, formData.phone);
+      // Pass name, email, password, phone to register
+      await register(formData.name, formData.email, formData.password, formData.phone);
       toast.success(t("app.auth.signupSuccess"));
       navigate('/');
     } catch (error) {
