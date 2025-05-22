@@ -35,7 +35,7 @@ const AdminExportData: React.FC = () => {
       const projectData = data.projects.map(project => ({
         id: project.id || '',
         name: project.name || '',
-        location: project.location || 'N/A',
+        // Remove reference to non-existent location property
         leader: project.leaderId || 'N/A',
         completedWork: project.completedWork || 0,
         totalWork: project.totalWork || 0,

@@ -11,7 +11,8 @@ import { toast } from '@/components/ui/sonner';
 import { AuthLogo } from '@/components/auth/AuthLogo';
 
 export default function Signup() {
-  const { signup } = useAuth();
+  // Fix: Use register instead of signup since that's what's available in AuthContextType
+  const { register: signup } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   

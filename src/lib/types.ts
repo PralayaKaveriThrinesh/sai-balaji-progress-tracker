@@ -1,4 +1,3 @@
-
 export type UserRole = "leader" | "checker" | "owner" | "admin";
 
 export interface User {
@@ -17,6 +16,11 @@ export interface Project {
   workers: number;
   totalWork: number; // in meters
   completedWork: number; // in meters
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  location?: string;
+  completionPercentage?: number;
 }
 
 export interface Vehicle {
@@ -72,6 +76,7 @@ export interface ProgressUpdate {
   startMeterReading?: PhotoWithMetadata;
   endMeterReading?: PhotoWithMetadata;
   documents?: DocumentFile[];
+  location?: Location; // Add location property
 }
 
 export interface PaymentRequest {
@@ -90,6 +95,7 @@ export interface PaymentPurpose {
   type: "food" | "fuel" | "labour" | "vehicle" | "water" | "other";
   amount: number;
   images: PhotoWithMetadata[];
+  remarks?: string; // Add remarks property
 }
 
 export interface CorrectionRequest {

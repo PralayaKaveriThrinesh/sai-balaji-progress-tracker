@@ -1,4 +1,3 @@
-
 import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, IParagraphOptions } from 'docx';
 import { saveAs } from 'file-saver';
 import { Packer } from 'docx';
@@ -169,7 +168,7 @@ export const generateProjectReport = async (
             ["Start Date", projectData.startDate || "N/A"],
             ["End Date", projectData.endDate || "N/A"],
             ["Status", projectData.status || "N/A"],
-            ["Completion", `${projectData.completionPercentage || 0}%`],
+            ["Completion", `${projectData.completionPercentage || Math.round(((projectData.completedWork || 0) / (projectData.totalWork || 1)) * 100)}%`],
           ]),
           
           // Progress updates

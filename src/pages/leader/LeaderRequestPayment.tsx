@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
@@ -90,10 +89,20 @@ const LeaderRequestPayment: React.FC = () => {
     setFormValues(prev => ({ ...prev, progressUpdateId: updateId }));
   };
 
-  const handlePurposeChange = (index: number, field: keyof PaymentPurpose, value: any) => {
+  const handlePurposeChange = (index: number, field: keyof PaymentPurpose | 'remarks', value: any) => {
     setFormValues(prev => {
       const newPurposes = [...prev.purposes];
-      newPurposes[index] = { ...newPurposes[index], [field]: value };
+      if (field === 'remarks') {
+        newPurposes[index] = { 
+          ...newPurposes[index], 
+          remarks: value 
+        };
+      } else {
+        newPurposes[index] = { 
+          ...newPurposes[index], 
+          [field]: value 
+        };
+      }
       return { ...prev, purposes: newPurposes };
     });
   };
@@ -182,7 +191,7 @@ const LeaderRequestPayment: React.FC = () => {
   const handleCaptureImage = async (purposeIndex: number) => {
     try {
       const result = await captureImage();
-      if (result) {
+      if (result && typeof result !== 'string') {
         setFormValues(prev => {
           const newPurposes = [...prev.purposes];
           newPurposes[purposeIndex].images = [

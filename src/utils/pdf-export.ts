@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { Project, ProgressUpdate, PaymentRequest } from '@/lib/types';
@@ -131,7 +130,6 @@ export const convertChartDataForPdf = (
   };
 };
 
-// Generate a comprehensive PDF report for a project
 export const generateProjectPdfReport = async (
   project: Project,
   progress: ProgressUpdate[] = [],
@@ -228,7 +226,7 @@ export const generateProjectPdfReport = async (
   return doc;
 };
 
-// Convert Word document blob to PDF
+// Helper function to convert Word document blob to PDF
 export const wordToPdf = async (wordBlob: Blob): Promise<void> => {
   // This is a placeholder for a Word-to-PDF conversion function
   // In a real-world scenario, you'd use a library or service that can convert Word to PDF
