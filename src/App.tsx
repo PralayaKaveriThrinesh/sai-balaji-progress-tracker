@@ -7,9 +7,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/context/theme-provider";
 import { Layout } from "@/components/layout/layout";
 import { LanguageProvider } from "@/context/language-context";
+import { useAuth } from "@/context/auth-context";
+import { UserRole } from "@/lib/types";
 
 // Pages
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
@@ -47,46 +48,187 @@ import AdminExportData from "@/pages/admin/AdminExportData";
 
 const queryClient = new QueryClient();
 
+// Role-based route protection component
+const RoleRoute = ({ children, requiredRole }: { children: React.ReactNode; requiredRole: UserRole }) => {
+  const { user, isAuthenticated, role } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (role !== requiredRole) {
+    // Redirect to appropriate dashboard based on role
+    switch (role) {
+      case 'leader':
+        return <Navigate to="/leader" replace />;
+      case 'checker':
+        return <Navigate to="/checker" replace />;
+      case 'owner':
+        return <Navigate to="/owner" replace />;
+      case 'admin':
+        return <Navigate to="/admin" replace />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
+  }
+  
+  return <>{children}</>;
+};
+
+// Root route redirection based on auth status
+const RootRoute = () => {
+  const { isAuthenticated, role } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Redirect to appropriate dashboard based on role
+  switch (role) {
+    case 'leader':
+      return <Navigate to="/leader" replace />;
+    case 'checker':
+      return <Navigate to="/checker" replace />;
+    case 'owner':
+      return <Navigate to="/owner" replace />;
+    case 'admin':
+      return <Navigate to="/admin" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <Routes>
-        <Route path="/" element={<Layout><Index /></Layout>} />
+        {/* Default route redirects based on auth status */}
+        <Route path="/" element={<RootRoute />} />
+        
+        {/* Auth routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         
-        {/* Leader Routes */}
-        <Route path="/leader" element={<Layout><LeaderDashboard /></Layout>} />
-        <Route path="/leader/create-project" element={<Layout><LeaderCreateProject /></Layout>} />
-        <Route path="/leader/add-progress" element={<Layout><LeaderAddProgress /></Layout>} />
-        <Route path="/leader/view-progress" element={<Layout><LeaderViewProgress /></Layout>} />
-        <Route path="/leader/request-payment" element={<Layout><LeaderRequestPayment /></Layout>} />
-        <Route path="/leader/view-payment" element={<Layout><LeaderViewPayment /></Layout>} />
+        {/* Leader Routes - protected for leader role */}
+        <Route path="/leader" element={
+          <RoleRoute requiredRole="leader">
+            <Layout><LeaderDashboard /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/leader/create-project" element={
+          <RoleRoute requiredRole="leader">
+            <Layout><LeaderCreateProject /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/leader/add-progress" element={
+          <RoleRoute requiredRole="leader">
+            <Layout><LeaderAddProgress /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/leader/view-progress" element={
+          <RoleRoute requiredRole="leader">
+            <Layout><LeaderViewProgress /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/leader/request-payment" element={
+          <RoleRoute requiredRole="leader">
+            <Layout><LeaderRequestPayment /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/leader/view-payment" element={
+          <RoleRoute requiredRole="leader">
+            <Layout><LeaderViewPayment /></Layout>
+          </RoleRoute>
+        } />
         
-        {/* Checker Routes */}
-        <Route path="/checker" element={<Layout><CheckerDashboard /></Layout>} />
-        <Route path="/checker/review-submissions" element={<Layout><CheckerReviewSubmissions /></Layout>} />
-        <Route path="/checker/review-history" element={<Layout><CheckerReviewHistory /></Layout>} />
-        <Route path="/checker/projects" element={<Layout><CheckerProjects /></Layout>} />
+        {/* Checker Routes - protected for checker role */}
+        <Route path="/checker" element={
+          <RoleRoute requiredRole="checker">
+            <Layout><CheckerDashboard /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/checker/review-submissions" element={
+          <RoleRoute requiredRole="checker">
+            <Layout><CheckerReviewSubmissions /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/checker/review-history" element={
+          <RoleRoute requiredRole="checker">
+            <Layout><CheckerReviewHistory /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/checker/projects" element={
+          <RoleRoute requiredRole="checker">
+            <Layout><CheckerProjects /></Layout>
+          </RoleRoute>
+        } />
         
-        {/* Owner Routes */}
-        <Route path="/owner" element={<Layout><OwnerDashboard /></Layout>} />
-        <Route path="/owner/payment-queue" element={<Layout><OwnerPaymentQueue /></Layout>} />
-        <Route path="/owner/projects" element={<Layout><OwnerProjects /></Layout>} />
-        <Route path="/owner/statistics" element={<Layout><OwnerStatistics /></Layout>} />
-        <Route path="/owner/backup-links" element={<Layout><OwnerBackupLinks /></Layout>} />
+        {/* Owner Routes - protected for owner role */}
+        <Route path="/owner" element={
+          <RoleRoute requiredRole="owner">
+            <Layout><OwnerDashboard /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/owner/payment-queue" element={
+          <RoleRoute requiredRole="owner">
+            <Layout><OwnerPaymentQueue /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/owner/projects" element={
+          <RoleRoute requiredRole="owner">
+            <Layout><OwnerProjects /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/owner/statistics" element={
+          <RoleRoute requiredRole="owner">
+            <Layout><OwnerStatistics /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/owner/backup-links" element={
+          <RoleRoute requiredRole="owner">
+            <Layout><OwnerBackupLinks /></Layout>
+          </RoleRoute>
+        } />
         
-        {/* Admin Routes */}
-        <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
-        <Route path="/admin/credentials" element={<Layout><AdminCredentials /></Layout>} />
-        <Route path="/admin/vehicles" element={<Layout><AdminVehicles /></Layout>} />
-        <Route path="/admin/drivers" element={<Layout><AdminDrivers /></Layout>} />
-        <Route path="/admin/statistics" element={<Layout><AdminStatistics /></Layout>} />
-        <Route path="/admin/backup" element={<Layout><AdminBackup /></Layout>} />
-        <Route path="/admin/export-data" element={<Layout><AdminExportData /></Layout>} />
+        {/* Admin Routes - protected for admin role */}
+        <Route path="/admin" element={
+          <RoleRoute requiredRole="admin">
+            <Layout><AdminDashboard /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/credentials" element={
+          <RoleRoute requiredRole="admin">
+            <Layout><AdminCredentials /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/vehicles" element={
+          <RoleRoute requiredRole="admin">
+            <Layout><AdminVehicles /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/drivers" element={
+          <RoleRoute requiredRole="admin">
+            <Layout><AdminDrivers /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/statistics" element={
+          <RoleRoute requiredRole="admin">
+            <Layout><AdminStatistics /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/backup" element={
+          <RoleRoute requiredRole="admin">
+            <Layout><AdminBackup /></Layout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/export-data" element={
+          <RoleRoute requiredRole="admin">
+            <Layout><AdminExportData /></Layout>
+          </RoleRoute>
+        } />
         
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
