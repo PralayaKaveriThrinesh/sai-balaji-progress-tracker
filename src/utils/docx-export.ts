@@ -1,5 +1,5 @@
 
-import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, ImageRun } from 'docx';
+import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType } from 'docx';
 import { saveAs } from 'file-saver';
 
 interface DocxExportOptions {
@@ -77,9 +77,9 @@ export const exportToDocx = async ({
     ],
   });
 
-  // Generate the document
-  const blob = await doc.save();
-  saveAs(blob, fileName);
+  // Generate the document - Fixed the save method call
+  const buffer = await Packer.toBlob(doc);
+  saveAs(buffer, fileName);
 };
 
 // Helper function to create a table
@@ -186,7 +186,10 @@ function createDetailTable(data: string[][]) {
     new TableRow({
       children: [
         new TableCell({
-          children: [new Paragraph({ text: row[0], bold: true })],
+          children: [new Paragraph({ 
+            text: row[0], 
+            style: "strong"  // Use style instead of bold
+          })],
           width: { size: 30, type: WidthType.PERCENTAGE }
         }),
         new TableCell({
@@ -210,3 +213,6 @@ function createDetailTable(data: string[][]) {
     }
   });
 }
+
+// Import Packer for creating blobs
+import { Packer } from 'docx';

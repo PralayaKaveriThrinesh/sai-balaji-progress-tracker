@@ -10,6 +10,7 @@ import { generateExportData } from '@/lib/storage';
 import { useNavigate } from 'react-router-dom';
 import { exportToPDF, generateProjectPdfReport } from '@/utils/pdf-export';
 import { exportToDocx } from '@/utils/docx-export';
+import { Project } from '@/lib/types';
 
 const AdminExportData: React.FC = () => {
   const { user } = useAuth();
@@ -70,23 +71,23 @@ const AdminExportData: React.FC = () => {
       const data = generateExportData();
       
       // Get first project for demo
-      const firstProject = data.projects[0] || {};
+      const firstProject = data.projects[0] || {} as Project;
       
       // Generate sample progress data for the project
       const progressUpdates = data.progressUpdates 
-        .filter(entry => entry.projectId === firstProject.id)
+        .filter(entry => entry.projectId === firstProject.id || '')
         .slice(0, 5); // Limit to 5 entries
         
       // Generate sample payment data for the project
       const paymentRequests = data.paymentRequests
-        .filter(payment => payment.projectId === firstProject.id)
+        .filter(payment => payment.projectId === firstProject.id || '')
         .slice(0, 5); // Limit to 5 entries
       
       // Generate PDF report
       const doc = await generateProjectPdfReport(firstProject, progressUpdates, paymentRequests);
       
       // Save the PDF
-      doc.save(`project_report_${firstProject.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+      doc.save(`project_report_${firstProject.id || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`);
       
       toast.success(t("common.exportSuccess"));
     } catch (error) {
