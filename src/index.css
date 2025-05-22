@@ -96,6 +96,38 @@
     @apply bg-background text-foreground;
     background-image: var(--gradient-background);
   }
+  
+  /* Ensure all form inputs have proper dark mode colors */
+  input, textarea, select, .select-trigger {
+    @apply bg-background text-foreground border-input;
+  }
+  
+  /* Fix tables in dark mode */
+  table {
+    @apply bg-background border-border;
+  }
+  
+  /* Fix scrollbar colors */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted/80 rounded-full;
+  }
+  
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-muted/20;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-muted/40;
+  }
 }
 
 /* For the full-screen chart feature */
@@ -282,4 +314,74 @@
 
 .card-gradient-4 {
   @apply bg-gradient-to-br from-custom-pastel-pink/30 to-custom-pastel-blue/30;
+}
+
+/* Swipe to dismiss toast notifications */
+[data-sonner-toast] {
+  position: relative;
+  overflow: hidden;
+  transform: translateX(0);
+  transition: transform 0.3s ease-out;
+  user-select: none;
+}
+
+[data-sonner-toast][data-swiping="true"] {
+  transition: transform 0.1s linear;
+  transform: translateX(var(--swipe-amount, 0px));
+}
+
+[data-sonner-toast][data-swipe-out="true"] {
+  animation: slideRight 0.4s cubic-bezier(.05,.63,.42,.9) forwards;
+}
+
+/* Fix for blur and button freeze issue - improve performance */
+* {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+
+/* Prevent unnecessary repaints */
+body, .card, .btn, .nav-button {
+  will-change: transform;
+}
+
+/* Dark mode specific improvements */
+.dark input, 
+.dark textarea, 
+.dark select,
+.dark .select-trigger,
+.dark button,
+.dark .card,
+.dark .btn,
+.dark table,
+.dark th,
+.dark td {
+  @apply bg-card text-card-foreground border-border;
+}
+
+.dark .bg-muted {
+  @apply bg-muted text-muted-foreground;
+}
+
+/* Animation for swipe out */
+@keyframes slideRight {
+  from {
+    transform: translateX(var(--swipe-amount, 0px));
+  }
+  to {
+    transform: translateX(calc(100% + 16px));
+  }
+}
+
+/* Reduce animation motion for people who prefer reduced motion */
+@media (prefers-reduced-motion) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

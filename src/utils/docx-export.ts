@@ -1,6 +1,8 @@
 
-import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType } from 'docx';
+import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, IParagraphOptions } from 'docx';
 import { saveAs } from 'file-saver';
+import { Packer } from 'docx';
+import { Project, PaymentRequest, ProgressUpdate } from '@/lib/types';
 
 interface DocxExportOptions {
   title: string;
@@ -77,7 +79,7 @@ export const exportToDocx = async ({
     ],
   });
 
-  // Generate the document - Fixed the save method call
+  // Generate the document - Using Packer.toBlob for proper document generation
   const buffer = await Packer.toBlob(doc);
   saveAs(buffer, fileName);
 };
@@ -131,7 +133,11 @@ function createTable(columns: {key: string; header: string; width?: number}[], d
   });
 }
 
-export const generateProjectReport = async (projectData: any) => {
+export const generateProjectReport = async (
+  projectData: Project, 
+  progressUpdates: ProgressUpdate[] = [], 
+  paymentRequests: PaymentRequest[] = []
+): Promise<Document> => {
   // Simplified function to generate a complete project report
   const doc = new Document({
     sections: [
@@ -172,6 +178,35 @@ export const generateProjectReport = async (projectData: any) => {
             heading: HeadingLevel.HEADING_2,
             spacing: { before: 400, after: 200 }
           }),
+          
+          // Add progress updates if available
+          ...(progressUpdates.length > 0 ? 
+            progressUpdates.map(update => 
+              new Paragraph({
+                text: `Update ${new Date(update.date).toLocaleDateString()}: ${update.completedWork} meters completed`,
+                spacing: { after: 100 }
+              })
+            ) : [
+              new Paragraph({ text: "No progress updates available" })
+            ]),
+            
+          // Payment information
+          new Paragraph({
+            text: "Payment Information",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 400, after: 200 }
+          }),
+          
+          // Add payment details if available
+          ...(paymentRequests.length > 0 ?
+            paymentRequests.map(payment => 
+              new Paragraph({
+                text: `Payment ${new Date(payment.date).toLocaleDateString()}: ₹${payment.totalAmount} - Status: ${payment.status}`,
+                spacing: { after: 100 }
+              })
+            ) : [
+              new Paragraph({ text: "No payment information available" })
+            ])
         ]
       }
     ]
@@ -214,5 +249,56 @@ function createDetailTable(data: string[][]) {
   });
 }
 
-// Import Packer for creating blobs
-import { Packer } from 'docx';
+// Function to generate Word document and then convert to PDF
+export const generateWordAndConvertToPdf = async (options: DocxExportOptions): Promise<Blob> => {
+  // Create a new document
+  const doc = new Document({
+    sections: [
+      {
+        properties: {},
+        children: [
+          // Title
+          new Paragraph({
+            text: options.title,
+            heading: HeadingLevel.HEADING_1,
+            spacing: {
+              after: 200,
+            },
+          }),
+          
+          // Date
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `Generated on: ${new Date().toLocaleDateString()}`,
+                size: 20,
+              }),
+            ],
+            spacing: {
+              after: 200,
+            },
+          }),
+          
+          // Description if provided
+          ...(options.description ? [
+            new Paragraph({
+              text: options.description,
+              spacing: {
+                after: 200,
+              },
+            })
+          ] : []),
+          
+          // Create table
+          createTable(options.columns, options.data),
+        ],
+      },
+    ],
+  });
+
+  // Generate blob from the document
+  const buffer = await Packer.toBlob(doc);
+  
+  // Return the blob for further processing (e.g., conversion to PDF)
+  return buffer;
+};

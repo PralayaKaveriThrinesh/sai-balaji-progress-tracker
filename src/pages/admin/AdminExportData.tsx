@@ -9,7 +9,7 @@ import { toast } from '@/components/ui/sonner';
 import { generateExportData } from '@/lib/storage';
 import { useNavigate } from 'react-router-dom';
 import { exportToPDF, generateProjectPdfReport } from '@/utils/pdf-export';
-import { exportToDocx } from '@/utils/docx-export';
+import { exportToDocx, generateProjectReport } from '@/utils/docx-export';
 import { Project } from '@/lib/types';
 
 const AdminExportData: React.FC = () => {
@@ -33,10 +33,10 @@ const AdminExportData: React.FC = () => {
       
       // Prepare project data for Word document
       const projectData = data.projects.map(project => ({
-        id: project.id,
-        name: project.name,
-        location: 'N/A',
-        leader: 'N/A',
+        id: project.id || '',
+        name: project.name || '',
+        location: project.location || 'N/A',
+        leader: project.leaderId || 'N/A',
         completedWork: project.completedWork || 0,
         totalWork: project.totalWork || 0,
         progress: `${Math.round(((project.completedWork || 0) / (project.totalWork || 1)) * 100)}%`
@@ -75,12 +75,12 @@ const AdminExportData: React.FC = () => {
       
       // Generate sample progress data for the project
       const progressUpdates = data.progressUpdates 
-        .filter(entry => entry.projectId === firstProject.id || '')
+        .filter(entry => entry.projectId === (firstProject.id || ''))
         .slice(0, 5); // Limit to 5 entries
         
       // Generate sample payment data for the project
       const paymentRequests = data.paymentRequests
-        .filter(payment => payment.projectId === firstProject.id || '')
+        .filter(payment => payment.projectId === (firstProject.id || ''))
         .slice(0, 5); // Limit to 5 entries
       
       // Generate PDF report
@@ -105,8 +105,8 @@ const AdminExportData: React.FC = () => {
       
       // Prepare project data for PDF
       const projectData = data.projects.map(project => ({
-        id: project.id,
-        name: project.name,
+        id: project.id || '',
+        name: project.name || '',
         completedWork: project.completedWork || 0,
         totalWork: project.totalWork || 0,
         progress: `${Math.round(((project.completedWork || 0) / (project.totalWork || 1)) * 100)}%`

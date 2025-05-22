@@ -130,9 +130,14 @@ export function Navbar() {
             </SheetContent>
           </Sheet>
 
-          {/* Logo */}
-          <Link to="/" className="font-bold text-xl">
-            {t('app.name')}
+          {/* Logo and Title */}
+          <Link to="/" className="flex items-center space-x-2">
+            <img 
+              src="/lovable-uploads/a723c9c5-8174-41c6-b9d7-2d8646801ec6.png" 
+              alt="SB Constructions" 
+              className="h-8 w-8 rounded-full"
+            />
+            <span className="font-bold text-xl">SB Constructions</span>
           </Link>
 
           {/* Desktop Navigation */}

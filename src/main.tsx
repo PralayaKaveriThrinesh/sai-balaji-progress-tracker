@@ -1,21 +1,26 @@
 
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import './index.css';
-import { initializeStorage } from '@/lib/storage';
-import { ThemeProvider } from '@/context/theme-provider';
-import { LanguageProvider } from '@/context/language-context';
+import App from './App';
+import { ThemeProvider } from './context/theme-provider';
+import { LanguageProvider } from './context/language-context';
+import { AuthProvider } from './context/auth-context';
+import { Toaster } from './components/ui/sonner';
+import { initToastSwipeSupport } from './utils/toast-swipe';
 
-// Initialize storage on first load
-initializeStorage();
+// Initialize toast swipe support
+initToastSwipeSupport();
 
-createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
     <ThemeProvider>
       <LanguageProvider>
-        <App />
+        <AuthProvider>
+          <App />
+          <Toaster />
+        </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
-  </BrowserRouter>
+  </React.StrictMode>
 );

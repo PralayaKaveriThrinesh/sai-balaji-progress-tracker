@@ -1,7 +1,7 @@
 
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { ProgressUpdate, PaymentRequest } from '@/lib/types';
+import { Project, ProgressUpdate, PaymentRequest } from '@/lib/types';
 
 // Add type definitions for jspdf-autotable
 declare module 'jspdf' {
@@ -133,7 +133,7 @@ export const convertChartDataForPdf = (
 
 // Generate a comprehensive PDF report for a project
 export const generateProjectPdfReport = async (
-  project: any,
+  project: Project,
   progress: ProgressUpdate[] = [],
   payments: PaymentRequest[] = []
 ) => {
@@ -145,7 +145,7 @@ export const generateProjectPdfReport = async (
 
   // Title
   doc.setFontSize(20);
-  doc.text(`Project Report: ${project.name}`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+  doc.text(`Project Report: ${project.name || 'Unknown Project'}`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
   
   // Project details section
   doc.setFontSize(16);
@@ -182,7 +182,7 @@ export const generateProjectPdfReport = async (
       body: progress.map(p => [
         new Date(p.date).toLocaleDateString(),
         `${p.completedWork || 0} m`,
-        'N/A',
+        p.location ? `${p.location.latitude.toFixed(4)}, ${p.location.longitude.toFixed(4)}` : 'N/A',
         p.notes || ''
       ]),
       theme: 'striped'
@@ -204,7 +204,7 @@ export const generateProjectPdfReport = async (
         new Date(p.date).toLocaleDateString(),
         `₹${p.totalAmount.toLocaleString()}`,
         p.status,
-        ''
+        p.checkerNotes || ''
       ]),
       theme: 'striped'
     });
@@ -226,4 +226,15 @@ export const generateProjectPdfReport = async (
   }
   
   return doc;
+};
+
+// Convert Word document blob to PDF
+export const wordToPdf = async (wordBlob: Blob): Promise<void> => {
+  // This is a placeholder for a Word-to-PDF conversion function
+  // In a real-world scenario, you'd use a library or service that can convert Word to PDF
+  // For now, we'll simulate this by generating a PDF with similar content
+  
+  const doc = new jsPDF();
+  doc.text("Word document converted to PDF", 20, 20);
+  doc.save("converted-document.pdf");
 };
