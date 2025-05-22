@@ -46,38 +46,67 @@ export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
+    // Try to get language from localStorage, fallback to browser language or 'en'
     const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
-    return (savedLanguage as Language) || 'en';
+    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'te' || savedLanguage === 'kn')) {
+      return savedLanguage as Language;
+    }
+    
+    // Try to detect browser language
+    const browserLang = navigator.language.split('-')[0];
+    if (browserLang === 'te' || browserLang === 'kn') {
+      return browserLang as Language;
+    }
+    
+    return 'en';
   });
+
+  // Set document language when language changes
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.title = translations[language].app?.name || 'Sai Balaji Progress Tracker';
+  }, [language]);
 
   // Function to get nested values using dot notation
   const getNestedTranslation = (obj: any, path: string): string => {
+    if (!path) return '';
+    
     const keys = path.split('.');
-    return keys.reduce((acc, key) => {
-      if (acc && acc[key] !== undefined) {
+    let result = keys.reduce((acc, key) => {
+      if (acc && typeof acc === 'object' && key in acc) {
         return acc[key];
       }
-      return path; // Return the key path if translation not found
+      return undefined;
     }, obj);
+    
+    // Handle undefined or non-string values
+    if (result === undefined) {
+      // Try to get from English as fallback
+      if (language !== 'en') {
+        result = keys.reduce((acc, key) => {
+          if (acc && typeof acc === 'object' && key in acc) {
+            return acc[key];
+          }
+          return undefined;
+        }, translations['en']);
+      }
+      
+      // If still undefined, return the original key
+      if (result === undefined) {
+        return path;
+      }
+    }
+    
+    return typeof result === 'string' ? result : path;
   };
 
   const translate = (key: string): string => {
+    if (!key) return '';
+    
     const currentTranslations = translations[language];
     const translated = getNestedTranslation(currentTranslations, key);
     
-    if (typeof translated === 'string') {
-      return translated;
-    }
-    
-    // If translation not found in current language, try English as fallback
-    if (language !== 'en') {
-      const englishTranslated = getNestedTranslation(translations['en'], key);
-      if (typeof englishTranslated === 'string') {
-        return englishTranslated;
-      }
-    }
-    
-    return key; // Return the key as last resort
+    return translated;
   };
 
   const setLanguage = (newLanguage: Language) => {

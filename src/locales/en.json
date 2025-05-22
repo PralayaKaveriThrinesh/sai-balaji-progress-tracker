@@ -17,7 +17,8 @@
       "credentials": "Credentials",
       "vehicles": "Vehicles",
       "drivers": "Drivers",
-      "backup": "Backup Links"
+      "backup": "Backup Links",
+      "export": "Export Data"
     },
     "common": {
       "submit": "Submit",
@@ -42,7 +43,10 @@
       "updatedAt": "Updated At",
       "selectOption": "Select an option",
       "logout": "Logout",
-      "profile": "Profile"
+      "profile": "Profile",
+      "generating": "Generating document...",
+      "exportSuccess": "Document exported successfully",
+      "exportError": "Failed to export document"
     },
     "auth": {
       "login": "Login",
@@ -67,6 +71,28 @@
       "completedProjects": "Completed",
       "pendingPayments": "Pending Payments",
       "recentActivity": "Recent Activity"
+    },
+    "reports": {
+      "exportData": "Export Data",
+      "exportDescription": "Export all application data for backup or reporting purposes.",
+      "exportWord": "Export Word",
+      "exportWordDescription": "Export all data in Word format for printing or sharing.",
+      "exportWordDetails": "This will generate a comprehensive Word document with project details, progress updates, and payment information.",
+      "exportPDF": "Export PDF",
+      "exportPDFDescription": "Export all data in PDF format for printing or sharing.",
+      "exportPDFDetails": "This will generate a comprehensive PDF report with project details, progress updates, and payment information.",
+      "printReports": "Print Reports",
+      "printDescription": "Generate printable reports for projects, progress, and payments.",
+      "printDetails": "Select a report type to generate a printable document with comprehensive project information.",
+      "print": "Generate Report",
+      "projectsReport": "Projects Report",
+      "projectsDescription": "Overview of all projects in the system",
+      "projectName": "Project Name",
+      "completed": "Completed (m)",
+      "total": "Total (m)",
+      "progress": "Progress",
+      "location": "Location",
+      "teamLeader": "Team Leader"
     }
   },
   "index": {

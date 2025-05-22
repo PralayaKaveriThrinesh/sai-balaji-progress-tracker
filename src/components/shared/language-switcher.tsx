@@ -25,7 +25,11 @@ export function LanguageSwitcher() {
         {languageOptions.map(option => (
           <DropdownMenuItem 
             key={option.id}
-            onClick={() => setLanguage(option.id)}
+            onClick={() => {
+              setLanguage(option.id);
+              // Force reload to ensure all components are re-rendered with new language
+              window.location.reload();
+            }}
             className="flex items-center justify-between"
           >
             <span>{option.nativeName}</span>

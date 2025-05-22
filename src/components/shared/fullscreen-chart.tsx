@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useLanguage } from '@/context/language-context';
 
 interface ChartDataItem {
   name: string;
@@ -33,6 +34,7 @@ export function FullscreenChart({
   isOpen,
 }: FullscreenChartProps) {
   const [isFullscreen, setIsFullscreen] = useState(isOpen || false);
+  const { t } = useLanguage();
 
   const toggleFullscreen = () => {
     if (onClose) {
@@ -66,7 +68,7 @@ export function FullscreenChart({
     }
 
     return (
-      <Card className="w-full" onClick={() => setIsFullscreen(true)}>
+      <Card className="w-full cursor-pointer" onClick={() => setIsFullscreen(true)}>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
@@ -152,6 +154,7 @@ export function FullscreenChart({
             size="icon"
             className="close-button"
             onClick={toggleFullscreen}
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -164,7 +167,7 @@ export function FullscreenChart({
   }
 
   return (
-    <Card className="w-full" onClick={() => setIsFullscreen(true)}>
+    <Card className="w-full cursor-pointer" onClick={() => setIsFullscreen(true)}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
