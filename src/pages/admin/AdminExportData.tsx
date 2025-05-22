@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
@@ -162,7 +161,7 @@ const AdminExportData: React.FC = () => {
     }
   };
 
-  // Function to convert Word to PDF - Fixed the type issue here
+  // Function to convert Word to PDF - Fix type issue
   const handleWordToPDF = async () => {
     try {
       setLoading(prev => ({ ...prev, pdf: true }));
@@ -174,31 +173,27 @@ const AdminExportData: React.FC = () => {
       // Get first project for demo
       const firstProject = data.projects[0] || {} as Project;
       
-      // Generate a Word document - Update the type handling here
+      // Generate a Word document
       const docxBlob = await generateProjectReport(
         firstProject, 
         data.progressUpdates.filter(p => p.projectId === firstProject.id), 
         data.paymentRequests.filter(p => p.projectId === firstProject.id)
       );
       
-      // Fix: We'll create a proper Blob from the returned data
-      // instead of trying to use it directly as a File object
-      const formData = new FormData();
+      // Fix: The docxBlob returned by generateProjectReport is already a Document object, 
+      // not a standard Blob or File. We need to get its binary content properly.
       
-      // If docxBlob is already a Blob, use it directly
-      // If not, create a new Blob from it
-      const fileBlob = new Blob([docxBlob], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      formData.append('file', fileBlob, 'project_report.docx');
+      // Instead of trying to convert the Document to a Blob/File (which is causing the type error),
+      // we'll directly generate the PDF from the same data source
       
-      // Since we can't directly convert from Word to PDF in the browser,
-      // we'll use our PDF generation directly from the same data
+      // Generate PDF report directly from the same data
       const doc = await generateProjectPdfReport(
         firstProject,
         data.progressUpdates.filter(p => p.projectId === firstProject.id).slice(0, 5),
         data.paymentRequests.filter(p => p.projectId === firstProject.id).slice(0, 5)
       );
       
-      // Download the PDF
+      // Save the PDF
       doc.save(`project_report_${firstProject.id || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`);
       
       toast.success(t("common.exportSuccess"));

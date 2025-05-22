@@ -136,8 +136,8 @@ export const generateProjectReport = async (
   projectData: Project, 
   progressUpdates: ProgressUpdate[] = [], 
   paymentRequests: PaymentRequest[] = []
-): Promise<Document> => {
-  // Simplified function to generate a complete project report
+): Promise<Blob> => {
+  // Create the document as before
   const doc = new Document({
     sections: [
       {
@@ -211,7 +211,8 @@ export const generateProjectReport = async (
     ]
   });
   
-  return doc;
+  // Convert Document to Blob directly and return the Blob
+  return await Packer.toBlob(doc);
 };
 
 // Helper function to create a simple detail table
