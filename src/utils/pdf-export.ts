@@ -27,6 +27,7 @@ export const exportToPDF = ({
 }: PdfExportOptions): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
+      // Create a new PDF document
       const doc = new PDFDocument({
         margin: 50,
         size: 'A4',

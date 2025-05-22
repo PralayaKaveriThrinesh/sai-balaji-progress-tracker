@@ -1,10 +1,9 @@
-
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Download as FileExport, FilePdf } from 'lucide-react';
+import { Download, FileText, Download as FileExport, File } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { generateExportData } from '@/lib/storage';
 import { useNavigate } from 'react-router-dom';
@@ -316,7 +315,7 @@ const AdminExportData: React.FC = () => {
               Images will be included in the report.
             </p>
             <Button onClick={handleExportPDF} className="w-full" variant="outline">
-              <FilePdf className="mr-2 h-4 w-4" /> Export PDF
+              <File className="mr-2 h-4 w-4" /> Export PDF
             </Button>
           </CardContent>
         </Card>
