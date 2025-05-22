@@ -1,21 +1,35 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, FileOutput, Printer } from 'lucide-react';
+import { FileText, Download, FileOutput, Printer, FilePlus } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { generateExportData } from '@/lib/storage';
 import { useNavigate } from 'react-router-dom';
-import { exportToPDF, generateProjectPdfReport } from '@/utils/pdf-export';
+import { 
+  exportToPDF, 
+  generateProjectPdfReport, 
+  exportProjectsToPDF, 
+  exportPaymentsToPDF 
+} from '@/utils/pdf-export';
 import { exportToDocx, generateProjectReport } from '@/utils/docx-export';
 import { Project } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const AdminExportData: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  
+  const [exportType, setExportType] = useState('projects');
+  const [loading, setLoading] = useState({
+    word: false,
+    pdf: false,
+    report: false
+  });
 
   // Redirect if not admin
   useEffect(() => {
@@ -26,6 +40,7 @@ const AdminExportData: React.FC = () => {
 
   const handleExportDocx = async () => {
     try {
+      setLoading(prev => ({ ...prev, word: true }));
       toast.info(t("common.generating"));
       
       // Generate the export data
@@ -35,7 +50,6 @@ const AdminExportData: React.FC = () => {
       const projectData = data.projects.map(project => ({
         id: project.id || '',
         name: project.name || '',
-        // Remove reference to non-existent location property
         leader: project.leaderId || 'N/A',
         completedWork: project.completedWork || 0,
         totalWork: project.totalWork || 0,
@@ -60,44 +74,56 @@ const AdminExportData: React.FC = () => {
     } catch (error) {
       console.error("Word export error:", error);
       toast.error(t("common.exportError"));
+    } finally {
+      setLoading(prev => ({ ...prev, word: false }));
     }
   };
 
   const handleExportPDF = async () => {
     try {
+      setLoading(prev => ({ ...prev, pdf: true }));
       toast.info(t("common.generating"));
       
       // Generate the export data
       const data = generateExportData();
       
-      // Get first project for demo
-      const firstProject = data.projects[0] || {} as Project;
-      
-      // Generate sample progress data for the project
-      const progressUpdates = data.progressUpdates 
-        .filter(entry => entry.projectId === (firstProject.id || ''))
-        .slice(0, 5); // Limit to 5 entries
+      if (exportType === 'projects') {
+        await exportProjectsToPDF(data.projects);
+      } else if (exportType === 'payments') {
+        await exportPaymentsToPDF(data.paymentRequests);
+      } else {
+        // Get first project for demo
+        const firstProject = data.projects[0] || {} as Project;
         
-      // Generate sample payment data for the project
-      const paymentRequests = data.paymentRequests
-        .filter(payment => payment.projectId === (firstProject.id || ''))
-        .slice(0, 5); // Limit to 5 entries
-      
-      // Generate PDF report
-      const doc = await generateProjectPdfReport(firstProject, progressUpdates, paymentRequests);
-      
-      // Save the PDF
-      doc.save(`project_report_${firstProject.id || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`);
+        // Generate sample progress data for the project
+        const progressUpdates = data.progressUpdates 
+          .filter(entry => entry.projectId === (firstProject.id || ''))
+          .slice(0, 5); // Limit to 5 entries
+          
+        // Generate sample payment data for the project
+        const paymentRequests = data.paymentRequests
+          .filter(payment => payment.projectId === (firstProject.id || ''))
+          .slice(0, 5); // Limit to 5 entries
+        
+        // Generate PDF report
+        const doc = await generateProjectPdfReport(firstProject, progressUpdates, paymentRequests);
+        
+        // Save the PDF
+        doc.save(`project_report_${firstProject.id || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`);
+      }
       
       toast.success(t("common.exportSuccess"));
     } catch (error) {
       console.error("PDF export error:", error);
       toast.error(t("common.exportError"));
+    } finally {
+      setLoading(prev => ({ ...prev, pdf: false }));
     }
   };
 
   const handlePrintReport = async () => {
     try {
+      setLoading(prev => ({ ...prev, report: true }));
       toast.info(t("common.generating"));
       
       // Generate the export data
@@ -131,6 +157,51 @@ const AdminExportData: React.FC = () => {
     } catch (error) {
       console.error("PDF export error:", error);
       toast.error(t("common.exportError"));
+    } finally {
+      setLoading(prev => ({ ...prev, report: false }));
+    }
+  };
+
+  // Function to convert Word to PDF
+  const handleWordToPDF = async () => {
+    try {
+      setLoading(prev => ({ ...prev, pdf: true }));
+      toast.info(t("common.generating"));
+      
+      // Generate the export data
+      const data = generateExportData();
+      
+      // Get first project for demo
+      const firstProject = data.projects[0] || {} as Project;
+      
+      // Generate a Word document
+      const docxBlob = await generateProjectReport(
+        firstProject, 
+        data.progressUpdates.filter(p => p.projectId === firstProject.id), 
+        data.paymentRequests.filter(p => p.projectId === firstProject.id)
+      );
+      
+      // Convert the Word blob to a PDF
+      const formData = new FormData();
+      formData.append('file', docxBlob, 'project_report.docx');
+      
+      // Since we can't directly convert from Word to PDF in the browser,
+      // we'll use our PDF generation directly from the same data
+      const doc = await generateProjectPdfReport(
+        firstProject,
+        data.progressUpdates.filter(p => p.projectId === firstProject.id).slice(0, 5),
+        data.paymentRequests.filter(p => p.projectId === firstProject.id).slice(0, 5)
+      );
+      
+      // Download the PDF
+      doc.save(`project_report_${firstProject.id || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast.success(t("common.exportSuccess"));
+    } catch (error) {
+      console.error("Word to PDF conversion error:", error);
+      toast.error(t("common.exportError"));
+    } finally {
+      setLoading(prev => ({ ...prev, pdf: false }));
     }
   };
 
@@ -155,8 +226,9 @@ const AdminExportData: React.FC = () => {
             <p className="text-sm text-muted-foreground mb-6">
               {t("app.reports.exportWordDetails")}
             </p>
-            <Button onClick={handleExportDocx} className="w-full">
-              <FileText className="mr-2 h-4 w-4" /> {t("app.reports.exportWord")}
+            <Button onClick={handleExportDocx} className="w-full" disabled={loading.word}>
+              <FileText className="mr-2 h-4 w-4" /> 
+              {loading.word ? t("common.loading") : t("app.reports.exportWord")}
             </Button>
           </CardContent>
         </Card>
@@ -168,13 +240,39 @@ const AdminExportData: React.FC = () => {
               {t("app.reports.exportPDFDescription")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-6">
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground mb-2">
               {t("app.reports.exportPDFDetails")}
             </p>
-            <Button onClick={handleExportPDF} className="w-full" variant="outline">
-              <FileOutput className="mr-2 h-4 w-4" /> {t("app.reports.exportPDF")}
-            </Button>
+            
+            <div className="space-y-2">
+              <Label>{t("app.reports.exportType")}</Label>
+              <Select 
+                value={exportType} 
+                onValueChange={setExportType}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t("app.common.selectOption")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="projects">{t("app.navigation.projects")}</SelectItem>
+                  <SelectItem value="payments">{t("app.navigation.viewPayment")}</SelectItem>
+                  <SelectItem value="project_detail">{t("app.reports.detailedProjectReport")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={handleExportPDF} className="flex-1" variant="outline" disabled={loading.pdf}>
+                <FileOutput className="mr-2 h-4 w-4" /> 
+                {loading.pdf ? t("common.loading") : t("app.reports.exportPDF")}
+              </Button>
+              
+              <Button onClick={handleWordToPDF} className="flex-1" variant="outline" disabled={loading.pdf}>
+                <FilePlus className="mr-2 h-4 w-4" /> 
+                {loading.pdf ? t("common.loading") : t("app.reports.wordToPDF")}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -190,8 +288,14 @@ const AdminExportData: React.FC = () => {
           <p className="text-sm text-muted-foreground mb-6">
             {t("app.reports.printDetails")}
           </p>
-          <Button variant="outline" onClick={handlePrintReport} className="w-full md:w-auto">
-            <Printer className="mr-2 h-4 w-4" /> {t("app.reports.print")}
+          <Button 
+            variant="outline" 
+            onClick={handlePrintReport} 
+            className="w-full md:w-auto"
+            disabled={loading.report}
+          >
+            <Printer className="mr-2 h-4 w-4" /> 
+            {loading.report ? t("common.loading") : t("app.reports.print")}
           </Button>
         </CardContent>
       </Card>

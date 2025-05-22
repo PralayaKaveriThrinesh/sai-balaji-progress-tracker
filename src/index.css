@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -47,12 +46,12 @@
   }
 
   .dark {
-    /* Dark mode - vibrant dark theme with glow effects */
+    /* Dark mode - improved visibility with better contrast */
     --background: 262 30% 10%; /* Deep purple background */
     --foreground: 210 40% 98%;
 
     --card: 262 25% 15%; /* Slightly lighter purple */
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 0 0% 98%;
 
     --popover: 262 25% 15%;
     --popover-foreground: 210 40% 98%;
@@ -64,7 +63,7 @@
     --secondary-foreground: 210 40% 98%;
 
     --muted: 262 30% 20%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 215 20.2% 75.1%; /* Increased contrast for better visibility */
 
     --accent: 262 70% 60%; /* Rich purple accent */
     --accent-foreground: 210 40% 98%;
@@ -72,8 +71,8 @@
     --destructive: 0 62.8% 60.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 262 40% 25%;
-    --input: 262 40% 25%;
+    --border: 262 40% 35%; /* More visible borders in dark mode */
+    --input: 262 40% 35%; /* More visible input borders */
     --ring: 191 95% 65%;
 
     --sidebar-background: 262 40% 15%;
@@ -386,4 +385,45 @@ body, .card, .btn, .nav-button {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Enhance button styling to always ensure visible borders in dark mode */
+.dark .button-enhanced,
+.dark .btn,
+.dark button[class*="btn"],
+.dark [type="button"],
+.dark [type="submit"] {
+  @apply border border-border;
+}
+
+/* Make inputs more visible in dark mode */
+.dark input,
+.dark textarea,
+.dark select,
+.dark .select-trigger {
+  @apply border-border bg-card/50 text-foreground;
+  border-width: 1px;
+}
+
+/* Enhance dropdown visibility in dark mode */
+.dark [role="listbox"],
+.dark [role="menu"] {
+  @apply bg-card border border-border shadow-md;
+}
+
+/* Ensure form controls have proper contrast in dark mode */
+.dark label {
+  @apply text-foreground;
+}
+
+/* Fix for background on SelectTrigger and other interactive elements */
+.dark .select-trigger,
+.dark .popover-trigger,
+.dark .dropdown-trigger {
+  @apply bg-card border-border;
+}
+
+/* Fix popover content in dark mode */
+.dark [data-radix-popper-content-wrapper] > div {
+  @apply bg-card border border-border text-foreground;
 }

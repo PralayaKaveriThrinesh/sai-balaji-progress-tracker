@@ -1,3 +1,4 @@
+
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { Project, ProgressUpdate, PaymentRequest } from '@/lib/types';
@@ -74,8 +75,8 @@ export const exportToPDF = ({
         startY: yPos,
         theme: 'striped',
         headStyles: {
-          fillColor: [243, 244, 246],
-          textColor: [0, 0, 0],
+          fillColor: [100, 100, 100],
+          textColor: [255, 255, 255],
           fontStyle: 'bold'
         },
         styles: {
@@ -83,9 +84,9 @@ export const exportToPDF = ({
           cellPadding: 3,
         },
         alternateRowStyles: {
-          fillColor: [249, 250, 251]
+          fillColor: [240, 240, 240]
         },
-        margin: { top: 10 },
+        margin: { top: 10, left: 10, right: 10 },
       });
       
       // Add page numbers
@@ -134,7 +135,7 @@ export const generateProjectPdfReport = async (
   project: Project,
   progress: ProgressUpdate[] = [],
   payments: PaymentRequest[] = []
-) => {
+): Promise<jsPDF> => {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -165,6 +166,11 @@ export const generateProjectPdfReport = async (
     theme: 'striped',
     headStyles: {
       fillColor: [100, 100, 100],
+      textColor: [255, 255, 255],
+    },
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
     }
   });
   
@@ -183,7 +189,15 @@ export const generateProjectPdfReport = async (
         p.location ? `${p.location.latitude.toFixed(4)}, ${p.location.longitude.toFixed(4)}` : 'N/A',
         p.notes || ''
       ]),
-      theme: 'striped'
+      theme: 'striped',
+      headStyles: {
+        fillColor: [100, 100, 100],
+        textColor: [255, 255, 255],
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+      }
     });
   } else {
     doc.text("No progress updates available", 14, progressY + 10);
@@ -204,7 +218,15 @@ export const generateProjectPdfReport = async (
         p.status,
         p.checkerNotes || ''
       ]),
-      theme: 'striped'
+      theme: 'striped',
+      headStyles: {
+        fillColor: [100, 100, 100],
+        textColor: [255, 255, 255],
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+      }
     });
   } else {
     doc.text("No payment records available", 14, paymentY + 10);
@@ -226,13 +248,88 @@ export const generateProjectPdfReport = async (
   return doc;
 };
 
-// Helper function to convert Word document blob to PDF
+// Convert Word document to PDF
 export const wordToPdf = async (wordBlob: Blob): Promise<void> => {
-  // This is a placeholder for a Word-to-PDF conversion function
-  // In a real-world scenario, you'd use a library or service that can convert Word to PDF
-  // For now, we'll simulate this by generating a PDF with similar content
-  
-  const doc = new jsPDF();
-  doc.text("Word document converted to PDF", 20, 20);
-  doc.save("converted-document.pdf");
+  try {
+    // For now, we'll create a simple PDF directly since Word-to-PDF conversion
+    // is complex and typically requires a server-side component
+    const doc = new jsPDF();
+    
+    // Set up PDF title and content
+    doc.setFontSize(18);
+    doc.text("Word Document Converted to PDF", 20, 20);
+    
+    doc.setFontSize(12);
+    doc.text("This document was generated from a Word file.", 20, 40);
+    
+    // Current date
+    const date = new Date().toLocaleDateString();
+    doc.text(`Conversion date: ${date}`, 20, 50);
+    
+    // Save the PDF
+    doc.save("converted-document.pdf");
+  } catch (error) {
+    console.error("Error converting Word to PDF:", error);
+    throw error;
+  }
+};
+
+// Export functions for direct PDF generation from data
+export const exportProjectsToPDF = async (projects: Project[]): Promise<void> => {
+  try {
+    const data = projects.map(project => ({
+      id: project.id || '',
+      name: project.name || '',
+      completedWork: project.completedWork || 0,
+      totalWork: project.totalWork || 0,
+      progress: `${Math.round(((project.completedWork || 0) / (project.totalWork || 1)) * 100)}%`
+    }));
+    
+    return exportToPDF({
+      title: 'Projects Report',
+      description: 'List of all projects',
+      data,
+      columns: [
+        { key: 'name', header: 'Project Name', width: 150 },
+        { key: 'completedWork', header: 'Completed (m)', width: 80 },
+        { key: 'totalWork', header: 'Total (m)', width: 80 },
+        { key: 'progress', header: 'Progress', width: 80 }
+      ],
+      fileName: `projects-report-${new Date().toISOString().split('T')[0]}.pdf`,
+      orientation: 'landscape'
+    });
+  } catch (error) {
+    console.error("Error exporting projects to PDF:", error);
+    throw error;
+  }
+};
+
+export const exportPaymentsToPDF = async (payments: PaymentRequest[]): Promise<void> => {
+  try {
+    const data = payments.map(payment => ({
+      date: new Date(payment.date).toLocaleDateString(),
+      project: payment.projectId,
+      amount: payment.totalAmount.toLocaleString(),
+      status: payment.status,
+      notes: payment.checkerNotes || ''
+    }));
+    
+    return exportToPDF({
+      title: 'Payment Requests Report',
+      description: 'List of all payment requests',
+      data,
+      columns: [
+        { key: 'date', header: 'Date', width: 80 },
+        { key: 'project', header: 'Project ID', width: 80 },
+        { key: 'amount', header: 'Amount (₹)', width: 80 },
+        { key: 'status', header: 'Status', width: 80 },
+        { key: 'notes', header: 'Notes', width: 150 }
+      ],
+      fileName: `payments-report-${new Date().toISOString().split('T')[0]}.pdf`,
+      orientation: 'landscape'
+    });
+  } catch (error) {
+    console.error("Error exporting payments to PDF:", error);
+    throw error;
+  }
 };

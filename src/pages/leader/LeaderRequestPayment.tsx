@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/sonner';
 import { Project, PaymentPurpose, PhotoWithMetadata } from '@/lib/types';
@@ -13,8 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Camera, Calendar as CalendarIcon } from 'lucide-react';
-import { takePhoto } from '@/lib/camera';
+import { Upload, Calendar as CalendarIcon } from 'lucide-react';
 
 const LeaderRequestPayment = () => {
   const { t } = useLanguage();
@@ -28,6 +27,9 @@ const LeaderRequestPayment = () => {
   ]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  
+  // Create file input ref for each purpose
+  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   useEffect(() => {
     // Fetch projects from API or local storage
@@ -75,38 +77,50 @@ const LeaderRequestPayment = () => {
     }
   };
 
-  // Handle camera capture with proper null checks
-  const handleCameraCapture = async (purpose: PaymentPurpose) => {
+  // Handle file upload 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, purposeIndex: number) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
     try {
-      const result = await takePhoto();
+      const file = files[0];
       
-      // Add null check for result
-      if (!result) {
-        toast.error("Failed to capture photo");
+      // Validate file type (only images)
+      if (!file.type.startsWith('image/')) {
+        toast.error(t("app.paymentRequest.onlyImageFiles"));
         return;
       }
+
+      const reader = new FileReader();
       
-      // Update purposes with the new photo
-      setPurposes(prevPurposes =>
-        prevPurposes.map(p => {
-          if (p === purpose) {
-            return {
-              ...p,
-              images: [...p.images, {
-                dataUrl: result.dataUrl,
-                timestamp: new Date().toISOString(),
-                location: result.location || { latitude: 0, longitude: 0 }
-              }]
-            };
-          }
-          return p;
-        })
-      );
+      reader.onload = () => {
+        // Create a new photo object
+        const newPhoto: PhotoWithMetadata = {
+          dataUrl: reader.result as string,
+          timestamp: new Date().toISOString(),
+          location: { latitude: 0, longitude: 0 }
+        };
+
+        // Update purposes with the new photo
+        setPurposes(prevPurposes => 
+          prevPurposes.map((purpose, index) => 
+            index === purposeIndex 
+              ? { ...purpose, images: [...purpose.images, newPhoto] }
+              : purpose
+          )
+        );
+        
+        toast.success(t("app.paymentRequest.imageUploaded"));
+      };
       
-      toast.success("Photo captured successfully");
+      reader.onerror = () => {
+        toast.error(t("app.paymentRequest.uploadFailed"));
+      };
+      
+      reader.readAsDataURL(file);
     } catch (error) {
-      console.error("Error capturing photo:", error);
-      toast.error("Failed to capture photo");
+      console.error('File upload error:', error);
+      toast.error(t("app.paymentRequest.uploadFailed"));
     }
   };
 
@@ -133,6 +147,25 @@ const LeaderRequestPayment = () => {
         remarks: "" 
       }
     ]);
+  };
+  
+  const triggerFileInput = (index: number) => {
+    if (fileInputRefs.current[index]) {
+      fileInputRefs.current[index]?.click();
+    }
+  };
+  
+  const removeImage = (purposeIndex: number, imageIndex: number) => {
+    setPurposes(prevPurposes => 
+      prevPurposes.map((purpose, i) => 
+        i === purposeIndex 
+          ? { 
+              ...purpose, 
+              images: purpose.images.filter((_, imgIdx) => imgIdx !== imageIndex) 
+            }
+          : purpose
+      )
+    );
   };
 
   return (
@@ -218,14 +251,39 @@ const LeaderRequestPayment = () => {
                 <div>
                   <Label>{t("app.paymentRequest.images")}</Label>
                   <div className="flex space-x-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => handleCameraCapture(purpose)}>
-                      <Camera className="mr-2 h-4 w-4" />
-                      {t("app.paymentRequest.capture")}
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => triggerFileInput(index)}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {t("app.paymentRequest.uploadImage")}
                     </Button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e, index)}
+                      ref={(el) => fileInputRefs.current[index] = el}
+                    />
                   </div>
-                  <div className="flex mt-2 space-x-2">
+                  <div className="flex flex-wrap mt-2 gap-2">
                     {purpose.images.map((image, i) => (
-                      <img key={i} src={image.dataUrl} alt="Purpose" className="w-16 h-16 object-cover rounded" />
+                      <div key={i} className="relative">
+                        <img 
+                          src={image.dataUrl} 
+                          alt={`${t("app.paymentRequest.receipt")} ${i+1}`} 
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                          onClick={() => removeImage(index, i)}
+                        >
+                          ×
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -239,7 +297,13 @@ const LeaderRequestPayment = () => {
                   onChange={(e) => handlePurposeChange(index, 'remarks', e.target.value)}
                 />
               </div>
-              <Button type="button" variant="destructive" size="sm" className="mt-2" onClick={() => handleRemovePurpose(index)}>
+              <Button 
+                type="button" 
+                variant="destructive" 
+                size="sm" 
+                className="mt-2" 
+                onClick={() => handleRemovePurpose(index)}
+              >
                 {t("app.paymentRequest.removePurpose")}
               </Button>
             </div>

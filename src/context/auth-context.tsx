@@ -37,44 +37,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Updated login function to accept email (and optional password)
+  // Updated login function to properly handle user roles
   const login = (email: string, password?: string) => {
-    // Get the user from storage based on email
-    // This assumes your storage has a function to find users by email
-    // For a real app, you would make an API call here
-    const foundUser = { 
-      id: '1', 
-      name: 'User', 
-      email: email, 
-      password: password || '', 
-      role: 'leader' as UserRole 
-    };
-    
-    setUser(foundUser);
-    setCurrentUser(foundUser);
-    
-    // Redirect based on user role
-    let redirectPath = '/';
-    switch(foundUser.role) {
-      case 'leader':
-        redirectPath = '/leader';
-        break;
-      case 'checker':
-        redirectPath = '/checker';
-        break;
-      case 'owner':
-        redirectPath = '/owner';
-        break;
-      case 'admin':
-        redirectPath = '/admin';
-        break;
+    try {
+      // In a real app, we would validate credentials properly
+      // For this demo, determine role from the email
+      let role: UserRole = 'leader';
+      
+      if (email.includes('admin')) {
+        role = 'admin';
+      } else if (email.includes('checker')) {
+        role = 'checker';
+      } else if (email.includes('owner')) {
+        role = 'owner';
+      } else {
+        role = 'leader';
+      }
+      
+      // Create user object based on role
+      const foundUser: User = { 
+        id: '1', 
+        name: email.split('@')[0], 
+        email, 
+        password: password || '', 
+        role
+      };
+      
+      setUser(foundUser);
+      setCurrentUser(foundUser);
+      
+      // Redirect based on user role
+      let redirectPath = '/';
+      switch(foundUser.role) {
+        case 'leader':
+          redirectPath = '/leader';
+          break;
+        case 'checker':
+          redirectPath = '/checker';
+          break;
+        case 'owner':
+          redirectPath = '/owner';
+          break;
+        case 'admin':
+          redirectPath = '/admin';
+          break;
+      }
+      
+      toast.success(`Welcome, ${foundUser.name}`, {
+        description: `You are logged in as ${foundUser.role}`,
+      });
+      
+      navigate(redirectPath);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Login failed. Please try again.');
     }
-    
-    toast.success(`Welcome, ${foundUser.name}`, {
-      description: `You are logged in as ${foundUser.role}`,
-    });
-    
-    navigate(redirectPath);
   };
 
   const logout = () => {
