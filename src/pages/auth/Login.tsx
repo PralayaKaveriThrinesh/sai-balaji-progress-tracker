@@ -25,20 +25,19 @@ export default function Login() {
     event.preventDefault();
     
     if (!email || !password) {
-      toast.error(t("app.auth.allFieldsRequired"));
+      toast.error("All fields are required");
       return;
     }
 
     setLoading(true);
     
     try {
-      // Pass email and password to login
       await login(email, password);
-      toast.success(t("app.auth.loginSuccess"));
-      navigate('/');
+      toast.success("Login successful");
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(t("app.auth.loginError"));
+      toast.error("Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -47,64 +46,67 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      // Mock Google login by using the email "admin@saibalaji.com" with role admin
       await login("admin@saibalaji.com");
-      toast.success(t("app.auth.loginSuccess"));
-      navigate('/');
+      toast.success("Login successful");
+      navigate('/dashboard');
     } catch (error) {
       console.error('Google login error:', error);
-      toast.error(t("app.auth.loginError"));
+      toast.error("Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-primary/10 to-secondary/5 dark:from-primary/5 dark:to-background">
-      <Card className="w-full max-w-md border-2 border-primary/10 dark:border-primary/20 shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="20" height="20" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 20 0 L 0 0 0 20" fill="none" stroke="%23374151" stroke-width="0.5"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100%25" height="100%25" fill="url(%23grid)"/%3E%3C/svg%3E')] opacity-20"></div>
+      
+      <Card className="w-full max-w-md relative backdrop-blur-sm bg-background/95 border-2 border-primary/20 shadow-2xl">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-2">
-            <AuthLogo className="h-12 w-auto" alt="Sai Balaji Construction" />
+          <div className="flex justify-center mb-4">
+            <AuthLogo className="scale-110" />
           </div>
-          <CardTitle className="text-2xl text-center">{t("app.auth.login")}</CardTitle>
-          <CardDescription className="text-center">
-            {t("app.auth.enterCredentials")}
+          <CardTitle className="text-2xl text-center font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            Welcome Back
+          </CardTitle>
+          <CardDescription className="text-center text-muted-foreground">
+            Sign in to your account to continue
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t("app.auth.email")}</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input 
                 id="email" 
                 type="email" 
-                placeholder={t("app.auth.emailPlaceholder")} 
+                placeholder="Enter your email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background dark:bg-background border-2"
+                className="h-11 border-2 border-border/50 focus:border-primary transition-all duration-200"
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t("app.auth.password")}</Label>
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                  {t("app.auth.forgotPassword")}
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <Link to="/forgot-password" className="text-xs text-primary hover:text-primary/80 transition-colors">
+                  Forgot password?
                 </Link>
               </div>
               <div className="relative">
                 <Input 
                   id="password" 
                   type={showPassword ? "text" : "password"} 
-                  placeholder={t("app.auth.passwordPlaceholder")} 
+                  placeholder="Enter your password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-background dark:bg-background border-2 pr-10"
+                  className="h-11 border-2 border-border/50 focus:border-primary pr-10 transition-all duration-200"
                 />
                 <button 
                   type="button" 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -112,22 +114,27 @@ export default function Login() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? t("common.loading") : (
+            <Button type="submit" className="w-full h-11 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-200" disabled={loading}>
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </div>
+              ) : (
                 <span className="flex items-center gap-2">
                   <LogIn size={18} />
-                  {t("app.auth.login")}
+                  Sign In
                 </span>
               )}
             </Button>
 
-            <div className="relative my-4">
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-300 dark:border-gray-600"></span>
+                <span className="w-full border-t border-border/50"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background dark:bg-card px-2 text-muted-foreground">
-                  {t("app.auth.orContinueWith")}
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
                 </span>
               </div>
             </div>
@@ -135,7 +142,7 @@ export default function Login() {
             <Button 
               type="button" 
               variant="outline" 
-              className="w-full bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-2"
+              className="w-full h-11 border-2 border-border/50 hover:border-primary/50 hover:bg-accent transition-all duration-200"
               onClick={handleGoogleLogin}
               disabled={loading}
             >
@@ -157,14 +164,14 @@ export default function Login() {
                   fill="#EA4335"
                 />
               </svg>
-              Google
+              Continue with Google
             </Button>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-muted-foreground">
-              {t("app.auth.noAccount")}{' '}
-              <Link to="/signup" className="text-primary hover:underline">
-                {t("app.auth.signup")}
+              Don't have an account?{' '}
+              <Link to="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                Sign up
               </Link>
             </div>
           </CardFooter>

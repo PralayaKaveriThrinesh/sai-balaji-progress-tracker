@@ -1,10 +1,11 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { t } from '@/i18n';
+import { LayoutDashboard, BarChart3, Car, Users, FileText, HardDrive, Key, Download, Plus, TrendingUp, Eye, CreditCard, Receipt, CheckCircle, FolderOpen, ClipboardCheck, History } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -31,222 +32,140 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
     return location.pathname === path;
   };
 
-  const renderLeaderMenu = () => (
-    <div className="flex flex-col space-y-2">
-      <Link to="/leader" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/leader') ? 'default' : 'ghost'}
-          className={cn(
-            "w-full justify-start rounded-lg text-sm font-medium transition-all",
-            isActive('/leader') 
-              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
-              : "hover:bg-white/20 hover:text-white"
-          )}
-        >
-          Dashboard
-        </Button>
-      </Link>
-      
-      <Link to="/leader/create-project" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/leader/create-project') ? 'default' : 'ghost'}
-          className={cn(
-            "w-full justify-start rounded-lg text-sm font-medium transition-all",
-            isActive('/leader/create-project') 
-              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
-              : "hover:bg-white/20 hover:text-white"
-          )}
-        >
-          Create Project
-        </Button>
-      </Link>
-      
-      <Link to="/leader/add-progress" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/leader/add-progress') ? 'default' : 'ghost'}
-          className={cn(
-            "w-full justify-start rounded-lg text-sm font-medium transition-all",
-            isActive('/leader/add-progress') 
-              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
-              : "hover:bg-white/20 hover:text-white"
-          )}
-        >
-          Add Progress
-        </Button>
-      </Link>
-      
-      <Link to="/leader/view-progress" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/leader/view-progress') ? 'default' : 'ghost'}
-          className={cn(
-            "w-full justify-start rounded-lg text-sm font-medium transition-all",
-            isActive('/leader/view-progress') 
-              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
-              : "hover:bg-white/20 hover:text-white"
-          )}
-        >
-          View Progress
-        </Button>
-      </Link>
-      
-      <Link to="/leader/request-payment" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/leader/request-payment') ? 'default' : 'ghost'}
-          className={cn(
-            "w-full justify-start rounded-lg text-sm font-medium transition-all",
-            isActive('/leader/request-payment') 
-              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
-              : "hover:bg-white/20 hover:text-white"
-          )}
-        >
-          Request Payment
-        </Button>
-      </Link>
-      
-      <Link to="/leader/view-payment" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/leader/view-payment') ? 'default' : 'ghost'}
-          className={cn(
-            "w-full justify-start rounded-lg text-sm font-medium transition-all",
-            isActive('/leader/view-payment') 
-              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
-              : "hover:bg-white/20 hover:text-white"
-          )}
-        >
-          View Payments
-        </Button>
-      </Link>
-    </div>
-  );
+  const getNavigationItems = () => {
+    const baseItems = [
+      {
+        title: t("app.navigation.dashboard"),
+        url: `/${user.role}`,
+        icon: LayoutDashboard,
+      },
+    ];
 
-  const renderCheckerMenu = () => (
-    <div className="flex flex-col space-y-1">
-      <Link to="/checker" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/checker') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Dashboard
-        </Button>
-      </Link>
-      
-      <Link to="/checker/review-submissions" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/checker/review-submissions') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Review Submissions
-        </Button>
-      </Link>
-      
-      <Link to="/checker/review-history" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/checker/review-history') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Review History
-        </Button>
-      </Link>
-      
-      <Link to="/checker/projects" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/checker/projects') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          View Projects
-        </Button>
-      </Link>
-    </div>
-  );
+    switch (user.role) {
+      case 'admin':
+        return [
+          ...baseItems,
+          {
+            title: t("app.navigation.statistics"),
+            url: "/admin/statistics",
+            icon: BarChart3,
+          },
+          {
+            title: t("app.navigation.vehicles"),
+            url: "/admin/vehicles",
+            icon: Car,
+          },
+          {
+            title: t("app.navigation.drivers"),
+            url: "/admin/drivers",
+            icon: Users,
+          },
+          {
+            title: "Tenders",
+            url: "/admin/tenders",
+            icon: FileText,
+          },
+          {
+            title: t("app.navigation.backup"),
+            url: "/admin/backup",
+            icon: HardDrive,
+          },
+          {
+            title: t("app.navigation.credentials"),
+            url: "/admin/credentials",
+            icon: Key,
+          },
+          {
+            title: t("app.navigation.exportData"),
+            url: "/admin/export",
+            icon: Download,
+          },
+        ];
 
-  const renderOwnerMenu = () => (
-    <div className="flex flex-col space-y-1">
-      <Link to="/owner" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/owner') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Dashboard
-        </Button>
-      </Link>
-      
-      <Link to="/owner/payment-queue" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/owner/payment-queue') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Payment Queue
-        </Button>
-      </Link>
-      
-      <Link to="/owner/projects" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/owner/projects') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          View Projects
-        </Button>
-      </Link>
-      
-      <Link to="/owner/statistics" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/owner/statistics') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Statistics
-        </Button>
-      </Link>
-    </div>
-  );
+      case 'leader':
+        return [
+          ...baseItems,
+          {
+            title: t("app.navigation.createProject"),
+            url: "/leader/create-project",
+            icon: Plus,
+          },
+          {
+            title: t("app.navigation.addProgress"),
+            url: "/leader/add-progress",
+            icon: TrendingUp,
+          },
+          {
+            title: t("app.navigation.viewProgress"),
+            url: "/leader/view-progress",
+            icon: Eye,
+          },
+          {
+            title: t("app.navigation.requestPayment"),
+            url: "/leader/request-payment",
+            icon: CreditCard,
+          },
+          {
+            title: t("app.navigation.viewPayment"),
+            url: "/leader/view-payment",
+            icon: Receipt,
+          },
+          {
+            title: "Final Submission",
+            url: "/leader/final-submission",
+            icon: CheckCircle,
+          },
+        ];
 
-  const renderAdminMenu = () => (
-    <div className="flex flex-col space-y-1">
-      <Link to="/admin" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/admin') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Dashboard
-        </Button>
-      </Link>
-      
-      <Link to="/admin/credentials" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/admin/credentials') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Manage Credentials
-        </Button>
-      </Link>
-      
-      <Link to="/admin/vehicles" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/admin/vehicles') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Manage Vehicles
-        </Button>
-      </Link>
-      
-      <Link to="/admin/drivers" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/admin/drivers') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Manage Drivers
-        </Button>
-      </Link>
-      
-      <Link to="/admin/statistics" onClick={toggleSidebar}>
-        <Button
-          variant={isActive('/admin/statistics') ? 'default' : 'ghost'}
-          className="w-full justify-start"
-        >
-          Statistics
-        </Button>
-      </Link>
-    </div>
-  );
+      case 'owner':
+        return [
+          ...baseItems,
+          {
+            title: t("app.navigation.projects"),
+            url: "/owner/projects",
+            icon: FolderOpen,
+          },
+          {
+            title: t("app.navigation.statistics"),
+            url: "/owner/statistics",
+            icon: BarChart3,
+          },
+          {
+            title: t("app.navigation.paymentQueue"),
+            url: "/owner/payment-queue",
+            icon: CreditCard,
+          },
+          {
+            title: t("app.navigation.backupLinks"),
+            url: "/owner/backup-links",
+            icon: Link,
+          },
+        ];
+
+      case 'checker':
+        return [
+          ...baseItems,
+          {
+            title: t("app.navigation.projects"),
+            url: "/checker/projects",
+            icon: FolderOpen,
+          },
+          {
+            title: t("app.navigation.reviewSubmissions"),
+            url: "/checker/review-submissions",
+            icon: ClipboardCheck,
+          },
+          {
+            title: t("app.navigation.reviewHistory"),
+            url: "/checker/review-history",
+            icon: History,
+          },
+        ];
+
+      default:
+        return baseItems;
+    }
+  };
 
   return (
     <aside
@@ -274,10 +193,21 @@ export function Sidebar({ isOpen, toggleSidebar, className }: SidebarProps) {
         </div>
 
         {/* Menu based on user role */}
-        {user?.role === 'leader' && renderLeaderMenu()}
-        {user?.role === 'checker' && renderCheckerMenu()}
-        {user?.role === 'owner' && renderOwnerMenu()}
-        {user?.role === 'admin' && renderAdminMenu()}
+        {getNavigationItems().map((item) => (
+          <Link to={item.url} onClick={toggleSidebar} key={item.url}>
+            <Button
+              variant={isActive(item.url) ? 'default' : 'ghost'}
+              className={cn(
+                "w-full justify-start rounded-lg text-sm font-medium transition-all",
+                isActive(item.url) 
+                  ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-md shadow-primary/20" 
+                  : "hover:bg-white/20 hover:text-white"
+              )}
+            >
+              {item.title}
+            </Button>
+          </Link>
+        ))}
       </div>
     </aside>
   );

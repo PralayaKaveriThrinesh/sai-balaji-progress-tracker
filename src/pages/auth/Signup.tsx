@@ -1,183 +1,188 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
 import { AuthLogo } from '@/components/auth/AuthLogo';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 
 export default function Signup() {
-  // Use register from auth context
-  const { register } = useAuth();
+  const { signup } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: '',
+    phone: '',
+    role: ''
   });
-  
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
     
-    // Validation
+    if (!formData.name || !formData.email || !formData.password || !formData.role) {
+      toast.error("All fields are required");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      toast.error(t("app.auth.passwordMismatch"));
+      toast.error("Passwords do not match");
       return;
     }
-    
+
     if (formData.password.length < 6) {
-      toast.error(t("app.auth.passwordTooShort"));
+      toast.error("Password must be at least 6 characters");
       return;
     }
-    
+
     setLoading(true);
     
     try {
-      // Pass name, email, password, phone to register
-      await register(formData.name, formData.email, formData.password, formData.phone);
-      toast.success(t("app.auth.signupSuccess"));
+      await signup(formData.email, formData.password, formData.name, formData.role as any, formData.phone);
+      toast.success("Account created successfully");
       navigate('/login');
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error(t("app.auth.signupError"));
+      toast.error("Failed to create account");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleGoogleSignup = async () => {
+    setLoading(true);
+    try {
+      await signup("user@saibalaji.com", "password123", "Test User", "leader");
+      toast.success("Account created successfully");
+      navigate('/login');
+    } catch (error) {
+      console.error('Google signup error:', error);
+      toast.error("Failed to create account");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignup = async () => {
-    setLoading(true);
-    try {
-      // Mock Google signup with a random leader account
-      const randomName = `Leader_${Math.floor(Math.random() * 1000)}`;
-      await register(
-        randomName, 
-        `${randomName.toLowerCase()}@example.com`,
-        "password123",
-        "+1234567890"
-      );
-      toast.success(t("app.auth.signupSuccess"));
-      navigate('/login');
-    } catch (error) {
-      console.error('Google signup error:', error);
-      toast.error(t("app.auth.signupError"));
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-primary/10 to-secondary/5 dark:from-primary/5 dark:to-background">
-      <Card className="w-full max-w-md border-2 border-primary/10 dark:border-primary/20 shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="20" height="20" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 20 0 L 0 0 0 20" fill="none" stroke="%23374151" stroke-width="0.5"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100%25" height="100%25" fill="url(%23grid)"/%3E%3C/svg%3E')] opacity-20"></div>
+      
+      <Card className="w-full max-w-md relative backdrop-blur-sm bg-background/95 border-2 border-primary/20 shadow-2xl">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-2">
-            <AuthLogo className="h-12 w-auto" alt="Sai Balaji Construction" />
+          <div className="flex justify-center mb-4">
+            <AuthLogo className="scale-110" />
           </div>
-          <CardTitle className="text-2xl text-center">{t("app.auth.createAccount")}</CardTitle>
-          <CardDescription className="text-center">
-            {t("app.auth.enterDetails")}
+          <CardTitle className="text-2xl text-center font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            Create Account
+          </CardTitle>
+          <CardDescription className="text-center text-muted-foreground">
+            Join Sai Balaji Construction team
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{t("app.auth.fullName")}</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder={t("app.auth.fullNamePlaceholder")}
+              <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
+              <Input 
+                id="name" 
+                type="text" 
+                placeholder="Enter your full name" 
                 value={formData.name}
-                onChange={handleChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 required
-                className="bg-background dark:bg-background border-2"
+                className="h-11 border-2 border-border/50 focus:border-primary transition-all duration-200"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="email">{t("app.auth.email")}</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder={t("app.auth.emailPlaceholder")}
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="Enter your email" 
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 required
-                className="bg-background dark:bg-background border-2"
+                className="h-11 border-2 border-border/50 focus:border-primary transition-all duration-200"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="phone">{t("app.auth.phone")}</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder={t("app.auth.phonePlaceholder")}
+              <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+              <Input 
+                id="phone" 
+                type="tel" 
+                placeholder="Enter your phone number" 
                 value={formData.phone}
-                onChange={handleChange}
-                required
-                className="bg-background dark:bg-background border-2"
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                className="h-11 border-2 border-border/50 focus:border-primary transition-all duration-200"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role" className="text-sm font-medium">Role</Label>
+              <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
+                <SelectTrigger className="h-11 border-2 border-border/50 focus:border-primary transition-all duration-200">
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leader">Team Leader</SelectItem>
+                  <SelectItem value="checker">Quality Checker</SelectItem>
+                  <SelectItem value="admin">Administrator</SelectItem>
+                  <SelectItem value="owner">Owner</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">{t("app.auth.password")}</Label>
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
               <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder={t("app.auth.passwordPlaceholder")}
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Create a password" 
                   value={formData.password}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   required
-                  className="bg-background dark:bg-background border-2 pr-10"
+                  className="h-11 border-2 border-border/50 focus:border-primary pr-10 transition-all duration-200"
                 />
                 <button 
                   type="button" 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{t("app.auth.confirmPassword")}</Label>
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
               <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder={t("app.auth.confirmPasswordPlaceholder")}
+                <Input 
+                  id="confirmPassword" 
+                  type={showConfirmPassword ? "text" : "password"} 
+                  placeholder="Confirm your password" 
                   value={formData.confirmPassword}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                   required
-                  className="bg-background dark:bg-background border-2 pr-10"
+                  className="h-11 border-2 border-border/50 focus:border-primary pr-10 transition-all duration-200"
                 />
                 <button 
                   type="button" 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -185,22 +190,27 @@ export default function Signup() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? t("common.loading") : (
+            <Button type="submit" className="w-full h-11 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-200" disabled={loading}>
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating account...
+                </div>
+              ) : (
                 <span className="flex items-center gap-2">
                   <UserPlus size={18} />
-                  {t("app.auth.signup")}
+                  Create Account
                 </span>
               )}
             </Button>
 
-            <div className="relative my-4">
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-300 dark:border-gray-600"></span>
+                <span className="w-full border-t border-border/50"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background dark:bg-card px-2 text-muted-foreground">
-                  {t("app.auth.orContinueWith")}
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
                 </span>
               </div>
             </div>
@@ -208,7 +218,7 @@ export default function Signup() {
             <Button 
               type="button" 
               variant="outline" 
-              className="w-full bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-2"
+              className="w-full h-11 border-2 border-border/50 hover:border-primary/50 hover:bg-accent transition-all duration-200"
               onClick={handleGoogleSignup}
               disabled={loading}
             >
@@ -230,14 +240,14 @@ export default function Signup() {
                   fill="#EA4335"
                 />
               </svg>
-              Google
+              Sign up with Google
             </Button>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-muted-foreground">
-              {t("app.auth.alreadyHaveAccount")}{' '}
-              <Link to="/login" className="text-primary hover:underline">
-                {t("app.auth.login")}
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                Sign in
               </Link>
             </div>
           </CardFooter>
